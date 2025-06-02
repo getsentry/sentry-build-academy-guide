@@ -1,0 +1,45 @@
+---
+title: Welcome to Sentry Build
+description: Fullstack Performance and Debugging with JavaScript
+template: splash
+hero:
+  tagline: A hands-on workshop to master tracing, logging, and performance monitoring with Sentry in JavaScript applications
+  image:
+    file: /src/assets/sentry-glyph-light-400x367.png
+  actions:
+    - text: Get Started
+      link: /quickstart/
+      icon: right-arrow
+    - text: Sentry.io
+      link: https://sentry.io
+      icon: external
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+:::note[What You'll Build]
+By the end of this workshop, you'll have a fully instrumented JavaScript application with:
+- **Complete request tracing** from frontend to backend
+- **Custom metrics** for business and performance monitoring  
+- **Proactive alerting** for critical issues
+- **Rich debugging context** for faster issue resolution
+
+![Example Page](/src/assets/img/6-ExamplePage.png)
+:::
+
+## Workshop Modules
+
+<CardGrid stagger>
+	<Card title="Getting Started with Tracing and Logs" icon="rocket">
+		Set up Sentry tracing and logging in your frontend and backend applications with Vite and Bun.
+	</Card>
+	<Card title="Instrumenting Span Attributes, Metrics, and Alerts" icon="setting">
+		Understand how to create custom spans that capture the information thats important to you, and how to setup Sentry to notify you when that performance changes. 
+	</Card>
+	<Card title="Tracing Database, Queues, and Caches" icon="information">
+		How to configure Sentry to trace performance of technologies like databases, application queues, and caches. 
+	</Card>
+	<Card title="Visualizing Traces in Sentry" icon="open-book">
+		Use Sentry to give you the tools to visualize performance on dashboard configurations within the Sentry UI.
+	</Card>
+</CardGrid>

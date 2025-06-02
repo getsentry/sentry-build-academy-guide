@@ -1,0 +1,524 @@
+---
+title: Visualizing Traces in Sentry
+description: Master Sentry's trace visualization tools to debug performance issues and optimize your application
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Now that you have comprehensive instrumentation throughout your application, it's time to learn how to effectively use Sentry's visualization tools to analyze performance, debug issues, and optimize your application.
+
+## Learning Objectives
+
+By the end of this module, you will:
+
+- Navigate Sentry's Performance and Trace views effectively
+- Use filters and search to find specific issues
+- Analyze waterfall charts and span details
+- Create custom dashboards and alerts
+- Identify performance bottlenecks and optimization opportunities
+
+## Understanding the Sentry Performance Interface
+
+### Performance Overview
+
+The Performance tab gives you a high-level view of your application's health:
+
+1. **Transaction Overview**: Shows all your instrumented endpoints and their performance
+2. **Web Vitals**: Frontend performance metrics (if using browser SDK)
+3. **Most Time Consuming**: Identifies your slowest operations
+4. **Most Frequent**: Shows your most commonly hit endpoints
+
+![Trace Explorer Search](/src/assets/img/TraceExplorerSearch.png)
+
+### Key Metrics to Monitor
+
+- **Throughput**: Requests per minute/second
+- **P50, P75, P95, P99**: Response time percentiles
+- **Error Rate**: Percentage of failed requests
+- **Apdex Score**: User satisfaction metric
+
+:::note[Understanding Percentiles]
+- **P50 (Median)**: 50% of requests are faster than this
+- **P95**: 95% of requests are faster than this
+- **P99**: 99% of requests are faster than this
+
+P95 and P99 are crucial for understanding the user experience of your slowest requests.
+:::
+
+## Analyzing Individual Traces
+
+### Trace Waterfall View
+
+The waterfall chart shows the complete journey of a request:
+
+<Steps>
+  1. **Reading the Timeline**
+     - Horizontal bars represent spans (operations)
+     - Length indicates duration
+     - Nested structure shows parent-child relationships
+     - Colors indicate different services/operations
+
+  2. **Identifying Bottlenecks**
+     - Look for the longest spans
+     - Check for serial operations that could be parallelized
+     - Find gaps that might indicate network latency
+     - Spot repeated operations that could be cached
+
+  3. **Understanding Span Details**
+     - Click any span to see detailed attributes
+     - Review custom attributes you've added
+     - Check error information if spans failed
+     - Examine database queries and their performance
+</Steps>
+
+### Common Patterns to Look For
+
+#### N+1 Database Queries
+```
+GET /api/products          [100ms]
+├── db.query.products     [20ms]  - SELECT * FROM products LIMIT 10
+├── db.query.category     [5ms]   - SELECT * FROM categories WHERE id = 1
+├── db.query.category     [5ms]   - SELECT * FROM categories WHERE id = 2
+├── db.query.category     [5ms]   - SELECT * FROM categories WHERE id = 1
+└── ... (more category queries)
+```
+
+**Solution**: Use joins or preload related data:
+```sql
+SELECT p.*, c.name as category_name 
+FROM products p 
+JOIN categories c ON p.category_id = c.id
+```
+
+#### Sequential External API Calls
+```
+POST /api/checkout         [2000ms]
+├── validate-payment      [500ms]
+├── check-inventory       [400ms]
+├── calculate-shipping    [300ms]
+└── send-confirmation     [200ms]
+```
+
+**Solution**: Parallelize independent operations:
+```js
+const [paymentValid, inventoryCheck, shippingCost] = await Promise.all([
+  validatePayment(paymentInfo),
+  checkInventory(items),
+  calculateShipping(address)
+]);
+```
+
+#### Cache Misses
+```
+GET /api/user/profile      [200ms]
+├── cache.get             [2ms]   - MISS
+├── db.query.user         [50ms]  - SELECT * FROM users WHERE id = 123
+├── db.query.preferences  [30ms]  - SELECT * FROM user_preferences WHERE user_id = 123
+└── cache.set             [3ms]   - Store result for 1 hour
+```
+
+## Using Filters and Search
+
+### Advanced Filtering
+
+Filter traces by various criteria:
+
+```
+# Find slow database operations
+span.op:db AND span.duration:>100ms
+
+# Find failed API calls
+transaction:/api/* AND status:error
+
+# Find traces with high memory usage
+measurements.memory_usage:>500MB
+
+# Find traces for specific users
+user.id:12345
+
+# Find traces with custom attributes
+product.category:electronics AND span.name:*checkout*
+```
+
+### Creating Saved Searches
+
+Save frequently used filters for quick access:
+
+1. **Slow Endpoints**: `p95(transaction.duration):>1s`
+2. **Database Heavy**: `count_if(span.op,db):>5`
+3. **High Error Rate**: `failure_rate():>0.05`
+4. **Cache Efficiency**: `sum(cache.hits) / sum(cache.operations) * 100`
+
+## Performance Debugging Workflows
+
+### Debugging Slow Response Times
+
+<Steps>
+  1. **Identify the Problem**
+     - Check Performance overview for slow transactions
+     - Look at P95/P99 response times
+     - Identify trends over time
+
+  2. **Examine Individual Traces**
+     - Click on slow transactions to view traces
+     - Analyze the waterfall chart
+     - Identify the longest spans
+
+  3. **Drill Down into Specific Operations**
+     - Click spans to see detailed attributes
+     - Check database query details
+     - Review custom span attributes
+
+  4. **Compare with Baseline**
+     - Compare current performance with historical data
+     - Look for recent changes that might have caused degradation
+     - Check for correlations with deployment times
+
+  5. **Form Hypothesis and Test**
+     - Based on evidence, form a hypothesis about the cause
+     - Make targeted changes
+     - Monitor the impact using Sentry metrics
+</Steps>
+
+### Example: Debugging a Slow Checkout Process
+
+Let's walk through debugging a slow checkout API:
+
+#### Step 1: Identify the Issue
+```
+Transaction: POST /api/checkout
+P95 Duration: 3.2s (baseline: 800ms)
+Error Rate: 2.1%
+Throughput: 12 req/min
+```
+
+#### Step 2: Examine Trace Details
+```
+POST /api/checkout                [3200ms]
+├── validate-request              [50ms]
+├── db.query.user                [30ms]
+├── process-payment               [2800ms]  ← BOTTLENECK
+│   ├── validate-card            [100ms]
+│   ├── external-api.stripe      [2600ms]  ← MAIN ISSUE
+│   └── save-transaction         [100ms]
+├── update-inventory             [200ms]
+├── send-confirmation            [100ms]
+└── cleanup                      [20ms]
+```
+
+![Span View](/src/assets/img/spanview.png)
+
+:::warning[External API Dependencies]
+External API calls are often the source of performance issues because:
+- Network latency is unpredictable
+- Third-party services may have their own performance issues
+- Timeouts and retries can compound delays
+
+Always monitor external dependencies closely and implement circuit breakers for resilience.
+:::
+
+#### Step 3: Analyze Span Attributes
+```js
+// Stripe API span attributes
+{
+  "http.method": "POST",
+  "http.url": "https://api.stripe.com/v1/charges",
+  "http.status_code": 200,
+  "http.duration": 2600,
+  "stripe.retry_count": 3,
+  "stripe.timeout": 5000
+}
+```
+
+#### Step 4: Root Cause Analysis
+The Stripe API is timing out and retrying. Possible causes:
+- Network connectivity issues
+- Stripe API performance degradation
+- Incorrect timeout configuration
+- Rate limiting
+
+#### Step 5: Solutions
+1. **Increase timeout temporarily**
+2. **Implement circuit breaker pattern**
+3. **Add retry logic with exponential backoff**
+4. **Monitor Stripe's status page**
+
+### Analyzing Database Performance
+
+#### Identifying Slow Queries
+
+Use this filter to find slow database operations:
+```
+span.op:db AND span.duration:>100ms
+```
+
+Common database issues to look for:
+
+1. **Missing Indexes**
+   ```sql
+   -- Slow query without index
+   SELECT * FROM orders WHERE customer_email = 'user@example.com'
+   -- Duration: 500ms, Rows examined: 100,000
+   
+   -- After adding index
+   CREATE INDEX idx_orders_customer_email ON orders(customer_email);
+   -- Duration: 5ms, Rows examined: 3
+   ```
+
+2. **Inefficient Joins**
+   ```sql
+   -- Inefficient
+   SELECT o.*, p.name FROM orders o, products p WHERE o.product_id = p.id
+   
+   -- Better
+   SELECT o.*, p.name FROM orders o INNER JOIN products p ON o.product_id = p.id
+   ```
+
+3. **Large Result Sets**
+   ```sql
+   -- Problem: Loading too much data
+   SELECT * FROM products  -- Returns 10,000 rows
+   
+   -- Solution: Pagination
+   SELECT * FROM products LIMIT 20 OFFSET 0
+   ```
+
+## Creating Custom Dashboards
+
+### Setting Up Performance Dashboards
+
+Create dashboards to monitor key metrics:
+
+#### Frontend Performance Dashboard
+```
+Widgets:
+1. Page Load Times (P50, P95)
+2. JavaScript Error Rate
+3. Largest Contentful Paint (LCP)
+4. First Input Delay (FID)
+5. Cumulative Layout Shift (CLS)
+6. API Response Times
+```
+
+#### Backend Performance Dashboard
+```
+Widgets:
+1. API Response Times by Endpoint
+2. Database Query Performance
+3. Error Rate by Service
+4. Background Job Processing Times
+5. Cache Hit Rates
+6. Memory and CPU Usage
+```
+
+#### Business Metrics Dashboard
+```
+Widgets:
+1. User Registration Rate
+2. Checkout Completion Rate
+3. Payment Success Rate
+4. Order Processing Time
+5. User Session Duration
+```
+
+### Dashboard Query Examples
+
+#### API Performance Over Time
+```sql
+SELECT 
+  time,
+  avg(span.duration) as avg_response_time,
+  count() as request_count,
+  count_if(status, 'error') / count() * 100 as error_rate
+FROM spans
+WHERE span.name LIKE 'GET /api/%'
+  AND timestamp >= now() - interval '24 hours'
+GROUP BY time(1h)
+ORDER BY time;
+```
+
+#### Database Query Performance
+```sql
+SELECT 
+  db.operation,
+  db.table,
+  avg(db.duration) as avg_duration,
+  max(db.duration) as max_duration,
+  count() as query_count
+FROM spans
+WHERE span.op = 'db'
+  AND timestamp >= now() - interval '1 day'
+GROUP BY db.operation, db.table
+ORDER BY avg_duration DESC;
+```
+
+## Setting Up Intelligent Alerts
+
+:::tip[Smart Alerting Strategy]
+The best alerts are:
+- **Actionable**: Tell you what specific action to take
+- **Timely**: Alert before users are significantly impacted  
+- **Relevant**: Focused on business-critical metrics
+- **Contextual**: Include enough information to start debugging immediately
+
+Avoid alerts on vanity metrics that don't require immediate action.
+:::
+
+### Performance-Based Alerts
+
+<Steps>
+  1. **Response Time Degradation**
+     ```
+     Alert: API Response Time
+     Condition: p95(span.duration) > 1000ms
+     Time Window: 10 minutes
+     Threshold: 5 consecutive periods
+     ```
+
+  2. **Error Rate Spike**
+     ```
+     Alert: High Error Rate
+     Condition: failure_rate() > 5%
+     Time Window: 5 minutes
+     Threshold: Any period
+     ```
+
+  3. **Database Performance**
+     ```
+     Alert: Slow Database Queries
+     Condition: avg(db.duration) > 200ms
+     Time Window: 15 minutes
+     Filter: span.op:db
+     ```
+
+  4. **Cache Performance**
+     ```
+     Alert: Low Cache Hit Rate
+     Condition: cache.hit_rate < 80%
+     Time Window: 30 minutes
+     ```
+</Steps>
+
+### Business Logic Alerts
+
+```
+Alert: Low Conversion Rate
+Condition: checkout.success_rate < 95%
+Time Window: 1 hour
+
+Alert: High Cart Abandonment
+Condition: cart.abandoned_count > 100
+Time Window: 30 minutes
+
+Alert: Payment Failures
+Condition: payment.failure_rate > 2%
+Time Window: 10 minutes
+```
+
+## Advanced Analysis Techniques
+
+### Correlation Analysis
+
+Look for correlations between different metrics:
+
+1. **Error Rate vs Response Time**: Do errors increase when response times are high?
+2. **Cache Hit Rate vs Database Load**: How does cache performance affect database queries?
+3. **User Geography vs Performance**: Are users in certain regions experiencing slower performance?
+
+### Trend Analysis
+
+Use Sentry's trend detection:
+
+1. **Performance Regression Detection**: Automatically detect when performance degrades
+2. **Seasonal Patterns**: Identify patterns related to time of day, week, or special events
+3. **Release Impact**: Correlate performance changes with deployments
+
+### Custom Metrics for Business Intelligence
+
+Track business-specific metrics:
+
+```js
+// E-commerce metrics
+Sentry.metrics.increment('business.order_placed', 1, {
+  tags: {
+    product_category: order.category,
+    payment_method: order.paymentMethod,
+    user_tier: user.tier
+  }
+});
+
+// User engagement metrics
+Sentry.metrics.timing('business.session_duration', sessionDuration, {
+  tags: {
+    user_type: user.type,
+    feature_used: lastFeature
+  }
+});
+
+// Performance impact on business
+Sentry.metrics.distribution('business.checkout_completion_time', checkoutTime, {
+  tags: {
+    performance_tier: getPerformanceTier(pageLoadTime)
+  }
+});
+```
+
+## Performance Optimization Strategies
+
+### Based on Sentry Data
+
+1. **Code Splitting**: Use trace data to identify heavy JavaScript bundles
+2. **Database Optimization**: Use query performance data to add indexes
+3. **Caching Strategy**: Use cache hit/miss data to optimize caching
+4. **API Design**: Use trace data to identify chatty APIs that need batching
+
+### Monitoring Optimization Impact
+
+After making changes:
+
+1. Create a release in Sentry to mark the deployment
+2. Compare performance before and after using Sentry's release comparison
+3. Monitor key metrics for 24-48 hours
+4. Set up alerts to catch any regressions
+
+## Troubleshooting Common Issues
+
+### Missing Traces
+
+**Problem**: Not seeing expected traces in Sentry
+
+**Solutions**:
+1. Check sample rate configuration
+2. Verify DSN and auth token
+3. Confirm traces are being created with proper attributes
+4. Check for console errors in debug mode
+
+### Incomplete Traces
+
+**Problem**: Traces missing spans or showing gaps
+
+**Solutions**:
+1. Verify trace propagation between services
+2. Check for exceptions that terminate spans early
+3. Ensure proper async/await usage
+4. Verify context is properly passed between operations
+
+### Performance Overhead
+
+**Problem**: Instrumentation impacting application performance
+
+**Solutions**:
+1. Reduce sample rate in production
+2. Use performance-conscious instrumentation patterns
+3. Avoid instrumenting hot code paths excessively
+4. Monitor instrumentation overhead itself
+
+## Next Steps
+
+Congratulations! You now have comprehensive knowledge of:
+- Setting up distributed tracing and logging
+- Instrumenting spans, metrics, and alerts
+- Monitoring databases, queues, and caches
+- Visualizing and analyzing performance data
+
+Continue to the [Wrapping Up](/wrapping-up/) section to review what you've learned and explore advanced Sentry features.

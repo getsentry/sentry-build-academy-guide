@@ -1,0 +1,163 @@
+/* Import header styles */
+@import './header.css';
+
+:root {
+  /* Sentry brand colors - dark mode is default */
+  --sl-color-accent-low: #2b1e44;
+  --sl-color-accent: #8661c5;
+  --sl-color-accent-high: #9b79df;
+  
+  /* Background colors */
+  --sl-color-bg: #14101c;
+  --sl-color-bg-nav: #1e1431;
+  --sl-color-bg-sidebar: var(--sl-color-bg-nav);
+  --sl-color-bg-inline-code: rgba(134, 97, 197, 0.15);
+  
+  /* Text colors */
+  --sl-color-text: #ffffff;
+  --sl-color-text-accent: var(--sl-color-accent-high);
+  --sl-color-text-invert: var(--sl-color-bg);
+  
+  /* Border colors */
+  --sl-color-border: #382a50;
+  
+  /* Other UI colors */
+  --sl-color-bg-selection: rgba(134, 97, 197, 0.25);
+  
+  /* Sentry button styles */
+  --sl-button-color: white;
+  --sl-button-border-radius: 4px;
+
+  /* Layout adjustments */
+  --sl-content-width: 65rem;
+  --sl-sidebar-width: 18rem;
+  --sl-font-size-sm: 0.95rem;
+}
+
+/* Light mode adjustments if needed */
+:root[data-theme='light'] {
+  --sl-color-bg: #f5f5f5;
+  --sl-color-bg-nav: #ffffff;
+  --sl-color-bg-sidebar: var(--sl-color-bg-nav);
+  --sl-color-text: #14101c;
+  --sl-color-text-accent: #6c5fc9;
+  --sl-color-accent-high: #6c5fc9;
+  --sl-color-accent: #593c9b;
+  --sl-color-accent-low: #e1d9ff;
+  --sl-color-border: #e2e2e2;
+  --sl-color-bg-inline-code: rgba(134, 97, 197, 0.1);
+}
+
+/* Enhance UI components to match Sentry's UI */
+.site-title {
+  font-weight: 600;
+}
+
+/* Main page styles */
+[data-has-hero] .hero {
+  padding: 5rem 0 6rem;
+  background: linear-gradient(135deg, #1e1431 0%, #14101c 100%);
+}
+
+[data-has-hero] .hero h1 {
+  font-size: 5rem;
+  max-width: 16ch;
+  margin: 0 auto 1rem;
+  line-height: 1;
+  color: white;
+  text-align: center;
+}
+
+[data-has-hero] .hero .tagline {
+  color: white;
+  font-size: 1.4rem;
+  max-width: 32ch;
+  margin: 0 auto 2rem;
+}
+
+/* Hero action buttons styling - align with text and style as white rectangles */
+[data-has-hero] .hero .actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+}
+
+[data-has-hero] .hero .actions a {
+  background-color: white;
+  color: black !important;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+[data-has-hero] .hero .actions a:hover {
+  background-color: #f2f2f2;
+}
+
+/* Remove default styling for minimal variant */
+[data-has-hero] .hero .actions a[data-variant="minimal"] {
+  background-color: white;
+  color: black !important;
+  border: none;
+}
+
+[data-has-hero] .hero .actions a[data-variant="minimal"]:hover {
+  background-color: #f2f2f2;
+}
+
+/* Content wrapper */
+.content-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Card styles to match Sentry UI */
+.card {
+  background-color: var(--sl-color-bg-nav);
+  border: 1px solid var(--sl-color-border);
+  border-radius: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Landing page styles */
+.landing-section {
+  padding: 4rem 0;
+}
+
+.landing-heading {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* Fix sidebar and main content colors */
+.sidebar {
+  background-color: var(--sl-color-bg-sidebar);
+  border-right: 1px solid var(--sl-color-border);
+}
+
+/* Tag and badge styling */
+.badge {
+  background-color: var(--sl-color-accent-low);
+  color: var(--sl-color-text);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  padding: 0.2rem 0.5rem;
+}
+
+/* Table of contents styling */
+.toc-wrapper {
+  border-left: 1px solid var(--sl-color-border);
+} 

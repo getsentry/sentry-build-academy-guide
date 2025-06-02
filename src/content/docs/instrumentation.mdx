@@ -1,0 +1,518 @@
+---
+title: Instrumenting Span Attributes, Metrics, and Alerts
+description: Learn to add custom spans, attributes, and metrics to track your application's behavior
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Now that you have basic tracing set up, it's time to dive deeper into instrumenting your application. In this module, you'll learn how to add meaningful attributes to your spans, track custom metrics, and set up alerts to monitor your application's health.
+
+## Learning Objectives
+
+By the end of this module, you will:
+
+- Add custom attributes to spans for better context
+- Create custom metrics to track business KPIs
+- Set up performance and error alerts
+- Implement custom instrumentation for key user flows
+- Use tags and context to organize and filter your data
+
+## Understanding Span Attributes
+
+Span attributes are key-value pairs that provide context about what happened during a span. They help you filter, search, and understand your traces better.
+
+### Standard Attributes
+
+Sentry supports OpenTelemetry semantic conventions:
+
+```js
+span.setAttributes({
+  // HTTP attributes
+  "http.method": "GET",
+  "http.url": "https://api.example.com/products",
+  "http.status_code": 200,
+  
+  // Database attributes  
+  "db.system": "postgresql",
+  "db.statement": "SELECT * FROM products WHERE category = ?",
+  "db.operation": "SELECT",
+  
+  // User attributes
+  "user.id": "12345",
+  "user.email": "user@example.com",
+  
+  // Custom business attributes
+  "product.category": "electronics",
+  "cart.total": 99.99
+});
+```
+
+:::note[Semantic Conventions]
+Following OpenTelemetry semantic conventions makes your traces more standardized and easier to analyze. This also helps when integrating with other observability tools or when migrating between different tracing solutions.
+
+Learn more about [OpenTelemetry Semantic Conventions](https://opentelemetry.io/docs/reference/specification/trace/semantic_conventions/).
+:::
+
+![Span Details](/src/assets/img/ServerSpanDetail.png)
+
+When you view spans in Sentry, you'll see all these attributes displayed clearly, making debugging much easier.
+
+## Advanced Frontend Instrumentation
+
+Let's add detailed instrumentation to a React component:
+
+<Steps>
+  1. **Instrument Component Lifecycle**
+
+     ```js
+     import * as Sentry from "@sentry/react";
+     import { useEffect, useState } from 'react';
+
+     const ProductList = ({ category }) => {
+       const [products, setProducts] = useState([]);
+       const [loading, setLoading] = useState(true);
+
+       useEffect(() => {
+         const fetchProducts = async () => {
+           return Sentry.startSpan(
+             { 
+               name: "ProductList.fetchProducts",
+               attributes: {
+                 "component": "ProductList",
+                 "product.category": category,
+                 "user.id": getCurrentUserId()
+               }
+             },
+             async (span) => {
+               try {
+                 const response = await fetch(`/api/products?category=${category}`);
+                 
+                 span.setAttributes({
+                   "http.status_code": response.status,
+                   "http.url": response.url
+                 });
+
+                 if (!response.ok) {
+                   throw new Error(`HTTP ${response.status}`);
+                 }
+
+                 const data = await response.json();
+                 
+                 span.setAttributes({
+                   "product.count": data.length,
+                   "response.size": JSON.stringify(data).length
+                 });
+
+                 setProducts(data);
+                 span.setStatus({ code: 1, message: "success" });
+                 
+               } catch (error) {
+                 span.recordException(error);
+                 span.setStatus({ code: 2, message: error.message });
+                 throw error;
+               } finally {
+                 setLoading(false);
+               }
+             }
+           );
+         };
+
+         fetchProducts();
+       }, [category]);
+
+       // Rest of component...
+     };
+     ```
+
+  2. **Track User Interactions**
+
+     ```js
+     const ProductCard = ({ product }) => {
+       const handleAddToCart = () => {
+         Sentry.startSpan(
+           {
+             name: "ProductCard.addToCart",
+             attributes: {
+               "product.id": product.id,
+               "product.name": product.name,
+               "product.price": product.price,
+               "user.action": "add-to-cart"
+             }
+           },
+           async (span) => {
+             // Add breadcrumb for user action
+             Sentry.addBreadcrumb({
+               message: 'User added product to cart',
+               category: 'user-interaction',
+               level: 'info',
+               data: {
+                 productId: product.id,
+                 productName: product.name
+               }
+             });
+
+             try {
+               await addToCart(product.id);
+               
+               span.setAttributes({
+                 "cart.action": "item-added",
+                 "operation.success": true
+               });
+               
+               // Track as custom metric
+               Sentry.metrics.increment('cart.items_added', 1, {
+                 tags: {
+                   product_category: product.category,
+                   price_range: getPriceRange(product.price)
+                 }
+               });
+               
+             } catch (error) {
+               span.recordException(error);
+               span.setAttributes({
+                 "operation.success": false,
+                 "error.type": error.name
+               });
+               throw error;
+             }
+           }
+         );
+       };
+
+       return (
+         <div className="product-card">
+           <h3>{product.name}</h3>
+           <p>${product.price}</p>
+           <button onClick={handleAddToCart}>Add to Cart</button>
+         </div>
+       );
+     };
+     ```
+</Steps>
+
+## Advanced Backend Instrumentation
+
+Let's instrument a Bun API endpoint with detailed attributes:
+
+<Steps>
+  1. **Create Instrumented Route Handlers**
+
+     ```js
+     import * as Sentry from "@sentry/bun";
+
+     const getProducts = async (request) => {
+       return Sentry.startSpan(
+         {
+           name: "GET /api/products",
+           attributes: {
+             "http.method": "GET",
+             "http.route": "/api/products",
+             "http.user_agent": request.headers.get("user-agent"),
+             "runtime": "bun"
+           }
+         },
+         async (span) => {
+           const url = new URL(request.url);
+           const category = url.searchParams.get('category');
+           const limit = parseInt(url.searchParams.get('limit') || '10');
+           
+           span.setAttributes({
+             "product.category": category,
+             "query.limit": limit,
+             "request.id": generateRequestId()
+           });
+
+           try {
+             // Database query with instrumentation
+             const products = await Sentry.startSpan(
+               {
+                 name: "db.query.products",
+                 attributes: {
+                   "db.system": "sqlite",
+                   "db.operation": "SELECT",
+                   "db.table": "products"
+                 }
+               },
+               async (dbSpan) => {
+                 const query = `SELECT * FROM products WHERE category = ? LIMIT ?`;
+                 dbSpan.setAttributes({
+                   "db.statement": query,
+                   "db.params.category": category,
+                   "db.params.limit": limit
+                 });
+
+                 const startTime = Date.now();
+                 const result = await db.query(query, [category, limit]);
+                 const duration = Date.now() - startTime;
+
+                 dbSpan.setAttributes({
+                   "db.duration": duration,
+                   "db.rows_affected": result.length
+                 });
+
+                 // Track database performance metric
+                 Sentry.metrics.timing('db.query.duration', duration, {
+                   tags: {
+                     table: 'products',
+                     operation: 'SELECT'
+                   }
+                 });
+
+                 return result;
+               }
+             );
+
+             span.setAttributes({
+               "response.count": products.length,
+               "response.size_bytes": JSON.stringify(products).length
+             });
+
+             return new Response(JSON.stringify(products), {
+               headers: { "Content-Type": "application/json" }
+             });
+
+           } catch (error) {
+             span.recordException(error);
+             span.setAttributes({
+               "error.type": error.name,
+               "error.message": error.message
+             });
+             
+             // Track error metric
+             Sentry.metrics.increment('api.errors', 1, {
+               tags: {
+                 endpoint: '/api/products',
+                 error_type: error.name
+               }
+             });
+
+             throw error;
+           }
+         }
+       );
+     };
+     ```
+
+  2. **Add Middleware for Automatic Instrumentation**
+
+     ```js
+     const instrumentationMiddleware = (handler) => {
+       return async (request) => {
+         const startTime = Date.now();
+         
+         return Sentry.withIsolationScope((scope) => {
+           // Set context for this request
+           scope.setTag('request.method', request.method);
+           scope.setTag('request.url', request.url);
+           scope.setUser({ 
+             id: extractUserId(request),
+             ip_address: request.headers.get('x-forwarded-for') 
+           });
+
+           return Sentry.startSpan(
+             {
+               name: `${request.method} ${new URL(request.url).pathname}`,
+               attributes: {
+                 "http.method": request.method,
+                 "http.url": request.url,
+                 "http.scheme": new URL(request.url).protocol,
+                 "http.host": request.headers.get('host')
+               }
+             },
+             async (span) => {
+               try {
+                 const response = await handler(request);
+                 const duration = Date.now() - startTime;
+                 
+                 span.setAttributes({
+                   "http.status_code": response.status,
+                   "http.response_size": response.headers.get('content-length'),
+                   "http.duration": duration
+                 });
+
+                 // Track response time metric
+                 Sentry.metrics.timing('http.request.duration', duration, {
+                   tags: {
+                     method: request.method,
+                     status_code: response.status.toString()
+                   }
+                 });
+
+                 return response;
+               } catch (error) {
+                 const duration = Date.now() - startTime;
+                 
+                 span.recordException(error);
+                 span.setAttributes({
+                   "http.status_code": 500,
+                   "http.duration": duration,
+                   "error.type": error.name
+                 });
+
+                 throw error;
+               }
+             }
+           );
+         });
+       };
+     };
+     ```
+</Steps>
+
+## Custom Metrics
+
+Metrics help you track quantitative data about your application:
+
+### Frontend Metrics
+
+```js
+import * as Sentry from "@sentry/react";
+
+// Track business metrics
+Sentry.metrics.increment('user.login', 1, {
+  tags: {
+    method: 'email',
+    source: 'homepage'
+  }
+});
+
+// Track performance metrics
+Sentry.metrics.timing('page.load_time', loadTime, {
+  tags: {
+    page: 'product-list',
+    user_type: 'premium'
+  }
+});
+
+// Track custom gauges
+Sentry.metrics.gauge('cart.items_count', cartItemsCount, {
+  tags: {
+    user_id: userId
+  }
+});
+
+// Track distributions
+Sentry.metrics.distribution('checkout.amount', checkoutAmount, {
+  tags: {
+    currency: 'USD',
+    payment_method: 'credit_card'
+  }
+});
+```
+
+### Backend Metrics
+
+```js
+import * as Sentry from "@sentry/bun";
+
+// Track API usage
+Sentry.metrics.increment('api.requests', 1, {
+  tags: {
+    endpoint: '/api/products',
+    method: 'GET',
+    status: '200'
+  }
+});
+
+// Track database performance
+Sentry.metrics.timing('db.query.duration', queryDuration, {
+  tags: {
+    table: 'products',
+    operation: 'SELECT'
+  }
+});
+
+// Track resource usage
+Sentry.metrics.gauge('memory.usage', process.memoryUsage().heapUsed, {
+  tags: {
+    service: 'api-server'
+  }
+});
+```
+
+## Setting Up Alerts
+
+Configure alerts in Sentry to monitor your application:
+
+:::caution[Alert Fatigue]
+Be strategic about your alerts! Too many alerts can lead to alert fatigue where important issues get ignored. Start with a few critical alerts and add more as needed.
+
+Focus on alerts that indicate:
+- User-impacting performance degradation
+- High error rates that affect core functionality
+- Business-critical metric thresholds
+:::
+
+### Performance Alerts
+
+1. **High Response Time Alert**
+   - Metric: `http.request.duration`
+   - Condition: `avg() > 1000ms`
+   - Time Window: 5 minutes
+
+2. **Error Rate Alert**
+   - Metric: `api.errors`
+   - Condition: `rate() > 5%`
+   - Time Window: 10 minutes
+
+![Issue Details Page](/src/assets/img/IssueDetailsPage.png)
+
+### Business Metrics Alerts
+
+1. **Low Conversion Rate**
+   - Metric: `user.conversion`
+   - Condition: `rate() < 2%`
+   - Time Window: 1 hour
+
+2. **High Cart Abandonment**
+   - Metric: `cart.abandoned`
+   - Condition: `count() > 50`
+   - Time Window: 30 minutes
+
+## Testing Your Instrumentation
+
+<Steps>
+  1. **Generate Test Data**
+
+     Create a test script to generate various scenarios:
+
+     ```js
+     // test-instrumentation.js
+     const testScenarios = async () => {
+       // Test successful flow
+       await simulateUserJourney('success');
+       
+       // Test error scenarios
+       await simulateUserJourney('error');
+       
+       // Test performance scenarios
+       await simulateUserJourney('slow');
+     };
+     ```
+
+  2. **Verify in Sentry**
+
+     Check that you can see:
+     - Detailed span attributes in trace view
+     - Custom metrics in the Metrics tab
+     - Alerts triggering when thresholds are exceeded
+
+  3. **Use Sentry's Query Builder**
+
+     Create custom queries to analyze your data:
+     - Filter traces by custom attributes
+     - Aggregate metrics by tags
+     - Create custom dashboards
+</Steps>
+
+## Best Practices
+
+1. **Attribute Naming**: Use semantic conventions where possible
+2. **Tag Cardinality**: Keep tag values bounded to avoid performance issues
+3. **Metric Naming**: Use consistent, descriptive names
+4. **Error Context**: Always include relevant context when recording exceptions
+5. **Performance**: Be mindful of instrumentation overhead
+
+## Next Steps
+
+Now that you have comprehensive instrumentation, move on to [Tracing for Database queries, Queues, and Caches](/database-queues-caches/) to learn about instrumenting your data layer and background processes.

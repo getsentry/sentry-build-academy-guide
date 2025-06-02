@@ -1,0 +1,88 @@
+/* Header styles to match Sentry */
+.header {
+  background-color: var(--sl-color-bg-nav);
+  border-bottom: 1px solid var(--sl-color-border);
+  height: 65px;
+  padding: 0 1.5rem;
+}
+
+/* Style navigation links */
+.nav-links a {
+  color: var(--sl-color-text);
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+  padding: 0.5rem 0.75rem;
+}
+
+.nav-links a:hover {
+  color: var(--sl-color-text-accent);
+}
+
+/* Style the mobile menu button */
+.site-menu-toggle {
+  color: var(--sl-color-text);
+}
+
+/* Style the GET STARTED button that appeared in the screenshot */
+.cta-button, 
+[data-has-sidebar] header a[href*="get-started"] {
+  background-color: white;
+  color: #14101c !important;
+  font-weight: 600;
+  padding: 8px 16px !important;
+  border-radius: var(--sl-button-border-radius);
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  transition: background-color 0.2s ease;
+  margin-left: 0.5rem;
+}
+
+.cta-button:hover, 
+[data-has-sidebar] header a[href*="get-started"]:hover {
+  background-color: #f2f2f2;
+}
+
+/* Main navigation styling */
+.nav {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+/* Add top-level menu styling similar to Sentry */
+.top-menu {
+  display: flex;
+  height: 100%;
+  align-items: center;
+}
+
+.top-menu-item {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+}
+
+/* Discord button style */
+.discord-button {
+  background-color: #5865F2;
+  border-radius: 50px;
+  padding: 8px 16px;
+  color: white;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.discord-button:hover {
+  background-color: #4752c4;
+} 

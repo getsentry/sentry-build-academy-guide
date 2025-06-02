@@ -1,0 +1,316 @@
+---
+title: Getting Started with Tracing and Logs
+description: Set up Sentry tracing and logging in your Vite frontend and Bun backend
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+In this module, you'll learn how to set up Sentry tracing and logging in your fullstack JavaScript application. We'll cover both the Vite frontend and the Bun backend to give you complete visibility into your application's behavior.
+
+## Learning Objectives
+
+By the end of this module, you will:
+
+- Understand the basics of distributed tracing
+- Set up Sentry in a Vite React application
+- Configure Sentry in a Bun backend application  
+- Create your first traces and spans
+- Send structured logs to Sentry
+
+## What is Distributed Tracing?
+
+Distributed tracing allows you to track requests as they flow through your application stack. Each operation creates a "span" that represents a unit of work, and related spans form a "trace" that shows the complete request journey.
+
+Key concepts:
+- **Trace**: The complete journey of a request through your system
+- **Span**: A single operation within a trace (e.g., database query, API call)
+- **Context**: Information that connects spans together across service boundaries
+
+## Setting Up Sentry in Your Frontend (Vite + React)
+
+<Steps>
+  1. **Install Sentry SDK**
+
+     ```bash
+     bun add @sentry/react @sentry/vite-plugin
+     ```
+
+  2. **Configure Vite Plugin**
+
+     Update your `vite.config.js`:
+
+     ```js
+     import { defineConfig } from 'vite'
+     import react from '@vitejs/plugin-react'
+     import { sentryVitePlugin } from "@sentry/vite-plugin";
+
+     export default defineConfig({
+       plugins: [
+         react(),
+         sentryVitePlugin({
+           org: "your-org-slug",
+           project: "your-project-slug",
+           authToken: process.env.SENTRY_AUTH_TOKEN,
+         }),
+       ],
+       build: {
+         sourcemap: true,
+       },
+     })
+     ```
+
+  3. **Initialize Sentry**
+
+     Create `src/sentry.js`:
+
+     ```js
+     import * as Sentry from "@sentry/react";
+
+     Sentry.init({
+       dsn: "YOUR_DSN_HERE",
+       integrations: [
+         Sentry.browserTracingIntegration(),
+         Sentry.replayIntegration(),
+       ],
+       tracesSampleRate: 1.0,
+       tracePropagationTargets: ["localhost", /^https:\/\/yourapi\.domain\.com\/api/],
+       replaysSessionSampleRate: 0.1,
+       replaysOnErrorSampleRate: 1.0,
+     });
+     ```
+
+  4. **Import in your main entry point**
+
+     In `src/main.jsx`:
+
+     ```js
+     import './sentry'
+     import React from 'react'
+     import ReactDOM from 'react-dom/client'
+     import App from './App.jsx'
+
+     ReactDOM.createRoot(document.getElementById('root')).render(
+       <React.StrictMode>
+         <App />
+       </React.StrictMode>,
+     )
+     ```
+</Steps>
+
+## Setting Up Sentry in Your Backend (Bun)
+
+<Steps>
+  1. **Install Sentry SDK**
+
+     ```bash
+     bun add @sentry/bun
+     ```
+
+  2. **Initialize Sentry**
+
+     Create `src/sentry.js` in your backend:
+
+     ```js
+     import * as Sentry from "@sentry/bun";
+
+     Sentry.init({
+       dsn: "YOUR_DSN_HERE",
+       integrations: [
+         Sentry.httpIntegration(),
+       ],
+       tracesSampleRate: 1.0,
+       // Enable performance monitoring
+       enableTracing: true,
+     });
+     ```
+
+  3. **Import in your server entry point**
+
+     In your main server file:
+
+     ```js
+     import './sentry.js'
+     import * as Sentry from "@sentry/bun";
+
+     const server = Bun.serve({
+       port: 3000,
+       fetch(request) {
+         return Sentry.withIsolationScope(() => {
+           // Your request handling logic
+           return new Response("Hello World!", {
+             headers: { "Content-Type": "text/plain" }
+           });
+         });
+       },
+     });
+
+     console.log(`Server running at http://localhost:${server.port}`);
+     ```
+</Steps>
+
+## Creating Your First Traces
+
+Now let's create some custom traces to track important operations:
+
+### Frontend Tracing
+
+```js
+import * as Sentry from "@sentry/react";
+
+// Track a user action
+const handleUserAction = async () => {
+  return Sentry.startSpan({ name: "user-action" }, async (span) => {
+    span.setAttributes({
+      "user.action": "button-click",
+      "component": "ProductCard"
+    });
+    
+    // Your business logic here
+    const result = await fetchProductData();
+    
+    span.setStatus({ code: 1, message: "success" });
+    return result;
+  });
+};
+```
+
+### Backend Tracing
+
+```js
+import * as Sentry from "@sentry/bun";
+
+// Track an API endpoint
+const handleApiRequest = async (request) => {
+  return Sentry.startSpan({ name: "api-request" }, async (span) => {
+    span.setAttributes({
+      "http.method": request.method,
+      "http.url": request.url,
+    });
+    
+    try {
+      const response = await processRequest(request);
+      span.setStatus({ code: 1, message: "success" });
+      return response;
+    } catch (error) {
+      span.recordException(error);
+      span.setStatus({ code: 2, message: error.message });
+      throw error;
+    }
+  });
+};
+```
+
+## Adding Structured Logging
+
+Enhance your traces with structured logs:
+
+### Frontend Logging
+
+```js
+import * as Sentry from "@sentry/react";
+
+// Log with context
+Sentry.addBreadcrumb({
+  message: 'User clicked product',
+  category: 'user-interaction',
+  level: 'info',
+  data: {
+    productId: '123',
+    productName: 'Cool T-Shirt'
+  }
+});
+
+// Capture structured messages
+Sentry.captureMessage('Product view tracked', {
+  level: 'info',
+  tags: {
+    section: 'catalog',
+    action: 'view'
+  },
+  extra: {
+    productId: '123',
+    userId: 'user-456'
+  }
+});
+```
+
+### Backend Logging
+
+```js
+import * as Sentry from "@sentry/bun";
+
+// Log database operations
+Sentry.addBreadcrumb({
+  message: 'Database query executed',
+  category: 'database',
+  level: 'info',
+  data: {
+    query: 'SELECT * FROM products WHERE id = ?',
+    duration: '15ms'
+  }
+});
+
+// Log with current span context
+Sentry.getCurrentHub().getScope()?.setTag('operation', 'product-fetch');
+Sentry.captureMessage('Product fetched successfully', 'info');
+```
+
+## Testing Your Setup
+
+Let's verify everything is working:
+
+1. **Start both applications**:
+   ```bash
+   # Terminal 1 - Backend
+   bun run server
+   
+   # Terminal 2 - Frontend  
+   bun run dev
+   ```
+
+2. **Trigger some operations** in your frontend that call your backend
+
+3. **Check Sentry** - You should see:
+   - Traces appearing in the Performance tab
+   - Breadcrumbs and logs in the Issues tab
+   - Connected spans between frontend and backend
+
+:::tip[Pro Tip]
+Enable debug mode during development to see exactly what Sentry is capturing:
+
+```js
+Sentry.init({
+  // ... other config
+  debug: true,
+});
+```
+
+This will log detailed information to your console about traces, spans, and any issues with instrumentation.
+:::
+
+![First Sentry Issues](/src/assets/img/FirstSentryIssues.png)
+
+Once you see your first traces and events in Sentry, you'll know your setup is working correctly!
+
+## Next Steps
+
+Now that you have basic tracing and logging set up, you're ready to move on to [Instrumenting Span Attributes, Metrics, and Alerts](/instrumentation/) where you'll learn to add more detailed instrumentation and monitoring.
+
+## Troubleshooting
+
+**Common Issues:**
+
+- **No traces appearing**: Check your DSN configuration and sample rates
+- **Frontend/backend traces not connecting**: Verify `tracePropagationTargets` configuration
+- **Missing source maps**: Ensure `sourcemap: true` in your Vite config
+
+**Debug Mode:**
+
+Enable debug logging to see what Sentry is doing:
+
+```js
+Sentry.init({
+  // ... other config
+  debug: true,
+});
+```
