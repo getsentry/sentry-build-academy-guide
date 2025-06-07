@@ -29,6 +29,7 @@ export default defineConfig({
           items: [
             { label: 'Quickstart', slug: 'quickstart' },
             { label: 'Getting Started with Sentry', slug: 'getting-started' },
+            { label: 'Configuring Sentry for Replays, Tracing, and Logs', slug: 'tracing-logs' },
             { label: 'Instrumenting Span Attributes, Metrics, and Alerts', slug: 'instrumentation' },
             { label: 'Tracing for Database queries, Queues, and Caches', slug: 'database-queues-caches' },
             { label: 'Visualizing Traces in Sentry', slug: 'visualizing-traces' },
