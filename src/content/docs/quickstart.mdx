@@ -13,13 +13,6 @@ Before you begin, ensure you have the following installed:
 
 - [Git](https://git-scm.com/downloads)
 - [Node.js](https://nodejs.org/) (version 18 or higher)
-- [Bun](https://bun.sh/) - Fast JavaScript runtime and package manager
-
-You can install Bun on MacOS/Linux with the following command:
-
-```bash
-curl -fsSL https://bun.sh/install | bash
-```
 
 Additionally, you'll need a Sentry account to follow along with the tracing and monitoring portions of this workshop:
 - [Sign up for a free Sentry.io](https://sentry.io/signup/) if you don't already have an account
@@ -30,38 +23,37 @@ Additionally, you'll need a Sentry account to follow along with the tracing and 
   1. **Clone the repository**
 
      ```bash
-     git clone https://github.com/getsentry/sentry-build-javascript
+     git clone https://github.com/getsentry/sentry-academy-workshop
      ```
 
   2. **Navigate to the project directory**
 
      ```bash
-     cd sentry-build-javascript
+     cd sentry-academy-workshop
      ```
 
-  3. **Install dependencies with Bun**
+  3. **Install dependencies with PNPM**
 
      ```bash
-     bun install
+     pnpm install
      ```
 
   4. **Set up environment variables**
 
      ```bash
-     cp .env.example .env
+     vim apps/server/.env
+     # Copy in the content that we provide during the workshop for the read-only account
      ```
 
-  5. **Start the backend server (Bun)**
+  5. **Start the Project**
 
      ```bash
-     bun run server
+     pnpm run dev
      ```
 
-  6. **In a new terminal, start the frontend development server (Vite)**
+  6. **Access the application project**
 
-     ```bash
-     bun run dev
-     ```
+     The project will now be running at [http://localhost:5173](http://localhost:5173) with the backend API running on [http://localhost:3001](http://localhost:3001).
 </Steps>
 
 ## What's Available After Setup
@@ -69,11 +61,11 @@ Additionally, you'll need a Sentry account to follow along with the tracing and 
 Once you've completed the setup, you'll have access to:
 
 - A Vite-powered React frontend running at [http://localhost:5173](http://localhost:5173)
-- A Bun backend API running at [http://localhost:3000](http://localhost:3000)
+- A Node.js backend API running at [http://localhost:3001](http://localhost:3001)
 - Full-stack JavaScript application ready for Sentry instrumentation
 
-This setup will allow you to progress through the workshop and start implementing tracing, logging, and performance monitoring.
+This setup will allow you to progress through the workshop and start implementing Sentry. This workshop will take you through setting up Error Monitoring, Logging, Tracing, and building visualizations in dashboards.
 
 ## Next Steps
 
-Once your environment is running, head to the [Getting Started with Tracing and Logs](/tracing-logs/) module to begin instrumenting your application with Sentry.
+Once your environment is running, head to the [Getting Started with Sentry](/tracing-logs/) module to begin instrumenting your application with Sentry.

@@ -17,29 +17,19 @@ hero:
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-:::note[What You'll Build]
-By the end of this workshop, you'll have a fully instrumented JavaScript application with:
-- **Complete request tracing** from frontend to backend
-- **Custom metrics** for business and performance monitoring  
-- **Proactive alerting** for critical issues
-- **Rich debugging context** for faster issue resolution
-
-![Example Page](/src/assets/img/6-ExamplePage.png)
-:::
-
 ## Workshop Modules
 
 <CardGrid stagger>
-	<Card title="Getting Started with Tracing and Logs" icon="rocket">
-		Set up Sentry tracing and logging in your frontend and backend applications with Vite and Bun.
+	<Card title="Getting Started with Sentry" icon="rocket">
+		Set up Error Monitoring, Logging, Session Replays, and Tracing in your React frontend and Node.js backend.
 	</Card>
-	<Card title="Instrumenting Span Attributes, Metrics, and Alerts" icon="setting">
-		Understand how to create custom spans that capture the information thats important to you, and how to setup Sentry to notify you when that performance changes. 
+	<Card title="Custom Spans and Metrics" icon="setting">
+		Create custom spans with attributes and metrics, and set up alerts for performance monitoring.
 	</Card>
-	<Card title="Tracing Database, Queues, and Caches" icon="information">
-		How to configure Sentry to trace performance of technologies like databases, application queues, and caches. 
+	<Card title="Understanding Database Queries" icon="information">
+		Learn to search for and leverage database query performance data in your Sentry spans.
 	</Card>
-	<Card title="Visualizing Traces in Sentry" icon="open-book">
-		Use Sentry to give you the tools to visualize performance on dashboard configurations within the Sentry UI.
+	<Card title="Creating Dashboards and Visualizations" icon="open-book">
+		Build custom dashboards to visualize your application's performance and error data.
 	</Card>
 </CardGrid>

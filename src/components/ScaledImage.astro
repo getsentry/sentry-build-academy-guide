@@ -1,0 +1,228 @@
+---
+// Define the component props
+interface Props {
+  src: string;
+  alt: string;
+  size?: number;
+  class?: string;
+  caption?: string;
+  align?: 'left' | 'center' | 'right';
+}
+
+// Access props with type safety
+const props = Astro.props;
+const src = props.src;
+const alt = props.alt;
+const size = props.size || 100;
+const caption = props.caption;
+const className = props.class || '';
+const align = props.align || 'left';
+
+// Ensure size is between 1 and 100
+const safeSize = Math.max(1, Math.min(100, size));
+
+// Generate a unique ID for this image instance
+const uniqueId = `image-${Math.random().toString(36).substring(2, 11)}`;
+---
+
+<figure class={`scaled-image align-${align} ${className}`} style={`max-width: ${safeSize}%;`}>
+  <img 
+    src={src} 
+    alt={alt} 
+    width="100%" 
+    id={uniqueId}
+    class="clickable-image" 
+    onclick={`toggleLightbox('${src}', '${alt}')`}
+  />
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<!-- Only include the lightbox HTML once per page -->
+<script is:inline>
+  // Check if lightbox already exists to avoid duplicates
+  if (!document.getElementById('image-lightbox')) {
+    // Create lightbox elements
+    const lightbox = document.createElement('div');
+    lightbox.id = 'image-lightbox';
+    lightbox.className = 'lightbox';
+    lightbox.style.display = 'none';
+    
+    const lightboxContent = document.createElement('div');
+    lightboxContent.className = 'lightbox-content';
+    
+    const closeBtn = document.createElement('span');
+    closeBtn.className = 'close-button';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.onclick = closeLightbox;
+    
+    const img = document.createElement('img');
+    img.id = 'lightbox-img';
+    img.alt = '';
+    img.className = 'lightbox-image';
+    img.onclick = closeLightbox; // Close when clicking on the lightbox image
+    
+    const caption = document.createElement('div');
+    caption.id = 'lightbox-caption';
+    caption.className = 'lightbox-caption';
+    
+    // Assemble lightbox
+    lightboxContent.appendChild(closeBtn);
+    lightboxContent.appendChild(img);
+    lightboxContent.appendChild(caption);
+    lightbox.appendChild(lightboxContent);
+    
+    // Add to document body
+    document.body.appendChild(lightbox);
+    
+    // Close lightbox when clicking outside the image
+    lightbox.addEventListener('click', function(event) {
+      if (event.target === lightbox) {
+        closeLightbox();
+      }
+    });
+    
+    // Close on ESC key
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        closeLightbox();
+      }
+    });
+  }
+
+  // Open lightbox function
+  function openLightbox(src, alt) {
+    const lightbox = document.getElementById('image-lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const lightboxCaption = document.getElementById('lightbox-caption');
+    
+    lightbox.style.display = 'flex';
+    lightboxImg.src = src;
+    lightboxImg.alt = alt;
+    lightboxCaption.textContent = alt;
+    
+    // Prevent page scrolling when lightbox is open
+    document.body.style.overflow = 'hidden';
+  }
+  
+  // Close lightbox function
+  function closeLightbox() {
+    const lightbox = document.getElementById('image-lightbox');
+    lightbox.style.display = 'none';
+    
+    // Re-enable page scrolling
+    document.body.style.overflow = 'auto';
+  }
+</script>
+
+<style>
+  .scaled-image {
+    margin: 1rem auto;
+    display: block;
+  }
+  
+  .scaled-image.align-left {
+    margin-left: 0;
+    margin-right: auto;
+  }
+  
+  .scaled-image.align-center {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .scaled-image.align-right {
+    margin-left: auto;
+    margin-right: 0;
+  }
+  
+  .scaled-image img.clickable-image {
+    display: block;
+    height: auto;
+    margin: 0 auto;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+  
+  .scaled-image.align-left img.clickable-image {
+    margin-left: 0;
+    margin-right: auto;
+  }
+  
+  .scaled-image.align-center img.clickable-image {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .scaled-image.align-right img.clickable-image {
+    margin-left: auto;
+    margin-right: 0;
+  }
+  
+  .scaled-image img.clickable-image:hover {
+    opacity: 0.9;
+  }
+
+  .scaled-image figcaption {
+    text-align: center;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    opacity: 0.8;
+    font-style: italic;
+  }
+  
+  .scaled-image.align-left figcaption {
+    text-align: left;
+  }
+  
+  .scaled-image.align-right figcaption {
+    text-align: right;
+  }
+  
+  /* Lightbox styles */
+  :global(.lightbox) {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.9);
+    align-items: center;
+    justify-content: center;
+  }
+  
+  :global(.lightbox-content) {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 90%;
+    max-height: 90%;
+  }
+  
+  :global(.lightbox-content img) {
+    max-width: 100%;
+    max-height: 90vh;
+    object-fit: contain;
+    cursor: pointer;
+  }
+  
+  :global(.close-button) {
+    position: absolute;
+    top: -30px;
+    right: 0;
+    color: white;
+    font-size: 35px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  
+  :global(.lightbox-caption) {
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    width: 100%;
+  }
+</style> 

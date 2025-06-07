@@ -1,26 +1,26 @@
 # Sentry Build Workshop Guide
 
-This repository contains the documentation and guide for the Sentry Build workshop, built using [Astro Starlight](https://starlight.astro.build).
+This repository contains the documentation and guide for the **Fullstack Performance and Debugging** workshop, built using [Astro Starlight](https://starlight.astro.build).
 
 ## About the Workshop
 
-Sentry Build is a hands-on workshop that teaches developers how to integrate Sentry into **Laravel and React** applications using a sample project called "Unborked". The workshop covers:
+Sentry Build is a comprehensive hands-on workshop that teaches developers how to implement complete observability in **Vite + React frontend** and **Bun backend** JavaScript applications. The workshop covers:
 
-- Getting started with the Unborked Laravel/React project
-- Installing and configuring Sentry for Laravel
-- Debugging performance issues using Sentry Tracing and the Laravel Framework View
-- Identifying and fixing application errors
-- Understanding core Sentry features like Error Monitoring, Performance Monitoring, and Replays in the context of a full-stack application.
+- Setting up distributed tracing across fullstack JavaScript applications
+- Implementing custom metrics and performance monitoring
+- Instrumenting databases, queues, and caches for complete visibility
+- Creating actionable alerts and dashboards
+- Using Sentry's visualization tools for debugging and optimization
+- Best practices for production-ready observability
 
 ## Workshop Content
 
-The workshop content, driven by the documentation site, covers modules like:
+The workshop content is organized into 4 comprehensive modules:
 
-1.  **Code Breaks... So What Now** - Introduction to the "Unborked" application.
-2.  **Install Sentry!** - Installation and initial Sentry configuration for Laravel.
-3.  **Why...so...slow?!** - Using Sentry Tracing to debug backend performance issues.
-4.  **A store that can't checkout** - Investigating and fixing frontend/backend errors affecting functionality.
-5.  **Error undefined; but maybe not anymore?** - Further debugging techniques with Sentry.
+1. **Getting Started with Tracing and Logs** - Set up Sentry tracing and logging in your Vite frontend and Bun backend application.
+2. **Instrumenting Span Attributes, Metrics, and Alerts** - Learn to add custom spans, attributes, and metrics to track your application's behavior.
+3. **Tracing Database, Queues, and Caches** - Instrument database queries, background jobs, and caching layers for complete visibility.
+4. **Visualizing Traces in Sentry** - Master Sentry's trace visualization tools to debug performance issues and optimize your application.
 
 ## Running the Documentation Locally
 
@@ -33,8 +33,8 @@ The workshop content, driven by the documentation site, covers modules like:
 
 ```bash
 # Clone the repository
-git clone https://github.com/getsentry/sentry-build-laravel.git
-cd sentry-build-laravel
+git clone https://github.com/getsentry/sentry-build-javascript.git
+cd sentry-build-javascript
 
 # Install dependencies
 npm install
@@ -61,39 +61,72 @@ All commands are run from the root of the project, from a terminal:
 
 If you'd like to contribute to this workshop, feel free to open a pull request or file an issue on the repository.
 
+## Workshop Technologies
+
+This workshop uses modern JavaScript technologies:
+
+- **Frontend**: Vite + React with Sentry browser SDK
+- **Backend**: Bun runtime with Sentry Bun SDK  
+- **Database**: SQLite with custom instrumentation
+- **Documentation**: Astro Starlight
+
 ## Resources
 
 - [Sentry Documentation](https://docs.sentry.io/)
-- [Laravel SDK Documentation](https://docs.sentry.io/platforms/php/guides/laravel/)
+- [JavaScript SDK Documentation](https://docs.sentry.io/platforms/javascript/)
+- [Bun SDK Documentation](https://docs.sentry.io/platforms/javascript/guides/bun/)
 - [React SDK Documentation](https://docs.sentry.io/platforms/javascript/guides/react/)
 - [Astro Starlight Documentation](https://starlight.astro.build/)
 
-## Components 
+## Astro Starlight Components Used
 
-Scaling an image down and making it clicakble - 
+This workshop uses several Astro Starlight components for enhanced learning:
 
-```javascript
-<ScaledImage 
-  src="/assets/img/AlertsScreen.png" 
-  alt="Alert Types in Sentry" 
-  size={90}
-  caption="Alert Types in Sentry" 
-/>
+### Images
+```markdown
+![Description](/src/assets/img/ImageName.png)
 ```
 
-Creating steps in Astro 
+### Steps Component
+```markdown
+import { Steps } from '@astrojs/starlight/components';
 
-```javascript 
 <Steps>
+  1. **Install Sentry SDK**
 
-  1. Access the alerts screen in your Unborked mobile project 
+     ```bash
+     bun add @sentry/bun
+     ```
 
-     - Highlight issues on the left navigation screen, and select "Alerts"
+  2. **Configure Sentry**
 
-  2. Delete the default alert thats been configured 
-
-     Select the 3 dots on the right hand side and delete the default alert. Ensure you confirm the deletion. 
-
+     Create your configuration file...
 </Steps>
+```
+
+### Card Grid Component
+```markdown
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<CardGrid>
+  <Card title="Module 1" icon="rocket">
+    Description of the module content.
+  </Card>
+</CardGrid>
+```
+
+### Callout Components
+```markdown
+:::tip[Pro Tip]
+Your helpful tip content here.
+:::
+
+:::note[Important]
+Important information to note.
+:::
+
+:::caution[Warning]
+Warning about potential issues.
+:::
 ```
 

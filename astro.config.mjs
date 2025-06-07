@@ -28,7 +28,7 @@ export default defineConfig({
           label: 'Workshop',
           items: [
             { label: 'Quickstart', slug: 'quickstart' },
-            { label: 'Getting Started with Tracing and Logs', slug: 'tracing-logs' },
+            { label: 'Getting Started with Sentry', slug: 'getting-started' },
             { label: 'Instrumenting Span Attributes, Metrics, and Alerts', slug: 'instrumentation' },
             { label: 'Tracing for Database queries, Queues, and Caches', slug: 'database-queues-caches' },
             { label: 'Visualizing Traces in Sentry', slug: 'visualizing-traces' },
