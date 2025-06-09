@@ -29,11 +29,26 @@ export default defineConfig({
           items: [
             { label: 'Quickstart', slug: 'quickstart' },
             { label: 'Getting Started with Sentry', slug: 'getting-started' },
-            { label: 'Broken Academy Single Sign On (Tracing, Logs)', slug: 'troubleshooting-auth' },
-            { label: 'Fixing Academy Course Search (Tracing, Logs)', slug: 'fixing-course-search' },
-            { label: 'Debugging Course Enrollments (Tracing, Logs)', slug: 'debugging-enrollments' },
-            { label: 'Tracing for Database queries, Queues, and Caches', slug: 'database-queues-caches' },
-            { label: 'Visualizing Traces in Sentry', slug: 'visualizing-traces' },
+            {
+              label: 'Broken Academy Single Sign On (Tracing, Logs)',
+              slug: 'troubleshooting-auth',
+            },
+            {
+              label: 'Fixing Academy Course Search (Tracing, Logs)',
+              slug: 'fixing-course-search',
+            },
+            {
+              label: 'Debugging Course Enrollments (Tracing, Logs)',
+              slug: 'debugging-enrollments',
+            },
+            {
+              label: 'Tracing for Database queries, Queues, and Caches',
+              slug: 'database-queues-caches',
+            },
+            {
+              label: 'Monitoring Critical Experiences',
+              slug: 'monitoring-critical-experiences',
+            },
           ],
         },
         {
