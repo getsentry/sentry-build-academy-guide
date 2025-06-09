@@ -1,524 +1,318 @@
 ---
-title: Creating Dashboards and Visualizations
-description: Build custom dashboards to visualize your application's performance and error data
+title: Monitoring Critical Experiences
+description: Learn how to set up dashboards to monitor business-critical user flows and experiences using Sentry
 ---
 
 import { Steps } from '@astrojs/starlight/components';
+import ScaledImage from '../../components/ScaledImage.astro';
 
-Now that you have comprehensive monitoring data flowing into Sentry, it's time to create meaningful dashboards and visualizations to track your application's health and performance. In this module, you'll learn how to build custom dashboards that tell the story of your application's behavior.
+Now that you've learned how to debug issues and monitor performance, it's time to focus on the experiences that matter most to your business. Critical Experiences are specific user flows that are business-critical - every error or performance issue in these flows will negatively impact your business success.
+
+TODO: Add screenshot showing a dashboard with multiple widgets monitoring different aspects of critical experiences.
 
 ## Learning Objectives
 
 By the end of this module, you will:
 
-- Create custom dashboards in Sentry to visualize your application data
-- Build charts and widgets that track key performance indicators
-- Set up dashboard alerts for proactive monitoring
-- Organize dashboards for different stakeholders (developers, product, business)
-- Use dashboard data to drive optimization decisions
+- Understand what Critical Experiences are and why they matter
+- Learn how to identify and define Critical Experiences for your application
+- Set up comprehensive dashboards to monitor Critical Experiences using Sentry
+- Create widgets that track errors, performance metrics, and custom business metrics
+- Configure alerts for Critical Experience degradation
 
-## Understanding the Sentry Performance Interface
+## What are Critical Experiences?
 
-### Performance Overview
+Critical Experiences (CX) are specific user journeys or workflows that directly impact your business outcomes. Unlike general application monitoring, Critical Experience monitoring focuses on the end-to-end user flows that drive revenue, user engagement, and business growth.
 
-The Performance tab gives you a high-level view of your application's health:
+### Examples of Critical Experiences
 
-1. **Transaction Overview**: Shows all your instrumented endpoints and their performance
-2. **Web Vitals**: Frontend performance metrics (if using browser SDK)
-3. **Most Time Consuming**: Identifies your slowest operations
-4. **Most Frequent**: Shows your most commonly hit endpoints
+**E-commerce Application:**
+- User registration and onboarding
+- Product search and discovery
+- Add to cart and checkout process
+- Payment processing
+- Order confirmation and tracking
 
-![Trace Explorer Search](/src/assets/img/TraceExplorerSearch.png)
+**SaaS Platform:**
+- User signup and trial activation
+- Core feature usage (dashboard loading, data processing)
+- Subscription management
+- Billing and payment flows
 
-### Key Metrics to Monitor
+**Content Platform:**
+- Content discovery and search
+- Content consumption (video playback, article reading)
+- User engagement actions (likes, shares, comments)
+- Subscription or premium feature access
 
-- **Throughput**: Requests per minute/second
-- **P50, P75, P95, P99**: Response time percentiles
-- **Error Rate**: Percentage of failed requests
-- **Apdex Score**: User satisfaction metric
+### Why Monitor Critical Experiences?
 
-:::note[Understanding Percentiles]
-- **P50 (Median)**: 50% of requests are faster than this
-- **P95**: 95% of requests are faster than this
-- **P99**: 99% of requests are faster than this
+Traditional monitoring focuses on technical metrics like server response times and error rates. Critical Experience monitoring connects these technical metrics to business outcomes by:
 
-P95 and P99 are crucial for understanding the user experience of your slowest requests.
-:::
+1. **Business Impact Focus**: Prioritizes issues that directly affect revenue and user satisfaction
+2. **End-to-End Visibility**: Tracks complete user journeys across multiple services and touchpoints
+3. **Proactive Problem Detection**: Identifies degradation before it significantly impacts business metrics
+4. **Contextual Alerting**: Provides alerts with business context, making it easier to prioritize responses
 
-## Analyzing Individual Traces
+## Monitoring Critical Experiences with Sentry
 
-### Trace Waterfall View
+Sentry provides powerful tools for monitoring Critical Experiences through:
 
-The waterfall chart shows the complete journey of a request:
+- **Custom Dashboards**: Visualize CX metrics alongside technical performance data
+- **Business Metrics**: Track custom metrics that align with business KPIs
+- **Error Tracking**: Monitor errors specifically within critical user flows
+- **Performance Monitoring**: Track response times and web vitals for key user interactions
+- **Release Tracking**: Understand how deployments impact Critical Experiences
 
-<Steps>
-  1. **Reading the Timeline**
-     - Horizontal bars represent spans (operations)
-     - Length indicates duration
-     - Nested structure shows parent-child relationships
-     - Colors indicate different services/operations
+### Setting Up CX Monitoring
 
-  2. **Identifying Bottlenecks**
-     - Look for the longest spans
-     - Check for serial operations that could be parallelized
-     - Find gaps that might indicate network latency
-     - Spot repeated operations that could be cached
+The process involves:
 
-  3. **Understanding Span Details**
-     - Click any span to see detailed attributes
-     - Review custom attributes you've added
-     - Check error information if spans failed
-     - Examine database queries and their performance
-</Steps>
+1. **Identifying Critical Experiences**: Define the key user flows that drive business value
+2. **Instrumenting CX Touchpoints**: Add tracking for errors, performance, and custom metrics
+3. **Creating CX Dashboards**: Build dashboards that provide comprehensive CX visibility
+4. **Configuring CX Alerts**: Set up alerts for CX degradation
 
-### Common Patterns to Look For
+## Sentry Academy Critical Experience Setup
 
-#### N+1 Database Queries
-```
-GET /api/products          [100ms]
-├── db.query.products     [20ms]  - SELECT * FROM products LIMIT 10
-├── db.query.category     [5ms]   - SELECT * FROM categories WHERE id = 1
-├── db.query.category     [5ms]   - SELECT * FROM categories WHERE id = 2
-├── db.query.category     [5ms]   - SELECT * FROM categories WHERE id = 1
-└── ... (more category queries)
-```
+For this workshop, we'll set up monitoring for the Sentry Academy Critical Experience, which includes the key user flows that determine student success and platform engagement.
 
-**Solution**: Use joins or preload related data:
-```sql
-SELECT p.*, c.name as category_name 
-FROM products p 
-JOIN categories c ON p.category_id = c.id
-```
+TODO: Add screenshot showing the Sentry Academy application with key user flows highlighted.
 
-#### Sequential External API Calls
-```
-POST /api/checkout         [2000ms]
-├── validate-payment      [500ms]
-├── check-inventory       [400ms]
-├── calculate-shipping    [300ms]
-└── send-confirmation     [200ms]
-```
+### Academy Critical Experience Flow
 
-**Solution**: Parallelize independent operations:
-```js
-const [paymentValid, inventoryCheck, shippingCost] = await Promise.all([
-  validatePayment(paymentInfo),
-  checkInventory(items),
-  calculateShipping(address)
-]);
-```
+Our Critical Experience encompasses these key touchpoints:
 
-#### Cache Misses
-```
-GET /api/user/profile      [200ms]
-├── cache.get             [2ms]   - MISS
-├── db.query.user         [50ms]  - SELECT * FROM users WHERE id = 123
-├── db.query.preferences  [30ms]  - SELECT * FROM user_preferences WHERE user_id = 123
-└── cache.set             [3ms]   - Store result for 1 hour
-```
+1. **Authentication Flow**: User login and account access
+2. **Homepage Experience**: Platform overview and course discovery
+3. **Courses List**: Course browsing and selection
+4. **Course Detail**: Individual course information and enrollment
 
-## Using Filters and Search
+Each touchpoint has specific metrics we need to monitor to ensure optimal user experience.
 
-### Advanced Filtering
+## 1. Authentication Flow Monitoring
 
-Filter traces by various criteria:
-
-```
-# Find slow database operations
-span.op:db AND span.duration:>100ms
-
-# Find failed API calls
-transaction:/api/* AND status:error
-
-# Find traces with high memory usage
-measurements.memory_usage:>500MB
-
-# Find traces for specific users
-user.id:12345
-
-# Find traces with custom attributes
-product.category:electronics AND span.name:*checkout*
-```
-
-### Creating Saved Searches
-
-Save frequently used filters for quick access:
-
-1. **Slow Endpoints**: `p95(transaction.duration):>1s`
-2. **Database Heavy**: `count_if(span.op,db):>5`
-3. **High Error Rate**: `failure_rate():>0.05`
-4. **Cache Efficiency**: `sum(cache.hits) / sum(cache.operations) * 100`
-
-## Performance Debugging Workflows
-
-### Debugging Slow Response Times
+The authentication flow is critical because users who can't log in can't access any platform features. We need to monitor both the technical performance and business impact of authentication issues.
 
 <Steps>
-  1. **Identify the Problem**
-     - Check Performance overview for slow transactions
-     - Look at P95/P99 response times
-     - Identify trends over time
+  1. **Authentication Error Monitoring**
 
-  2. **Examine Individual Traces**
-     - Click on slow transactions to view traces
-     - Analyze the waterfall chart
-     - Identify the longest spans
+     Set up monitoring for authentication-related errors:
+     - Login failures (invalid credentials, server errors)
+     - Session timeout issues
+     - OAuth/SSO integration failures
+     - Account lockout scenarios
 
-  3. **Drill Down into Specific Operations**
-     - Click spans to see detailed attributes
-     - Check database query details
-     - Review custom span attributes
+     TODO: Add screenshot showing authentication error tracking in Sentry with error rates and specific error types.
 
-  4. **Compare with Baseline**
-     - Compare current performance with historical data
-     - Look for recent changes that might have caused degradation
-     - Check for correlations with deployment times
+  2. **Authentication Performance Tracking**
 
-  5. **Form Hypothesis and Test**
-     - Based on evidence, form a hypothesis about the cause
-     - Make targeted changes
-     - Monitor the impact using Sentry metrics
+     Monitor authentication flow performance:
+     - Login response times (P75, P95)
+     - Authentication API latency
+     - Session establishment time
+     - Redirect performance after successful login
+
+     TODO: Add screenshot showing authentication performance metrics dashboard.
+
 </Steps>
 
-### Example: Debugging a Slow Checkout Process
+## 2. Homepage Experience Monitoring
 
-Let's walk through debugging a slow checkout API:
-
-#### Step 1: Identify the Issue
-```
-Transaction: POST /api/checkout
-P95 Duration: 3.2s (baseline: 800ms)
-Error Rate: 2.1%
-Throughput: 12 req/min
-```
-
-#### Step 2: Examine Trace Details
-```
-POST /api/checkout                [3200ms]
-├── validate-request              [50ms]
-├── db.query.user                [30ms]
-├── process-payment               [2800ms]  ← BOTTLENECK
-│   ├── validate-card            [100ms]
-│   ├── external-api.stripe      [2600ms]  ← MAIN ISSUE
-│   └── save-transaction         [100ms]
-├── update-inventory             [200ms]
-├── send-confirmation            [100ms]
-└── cleanup                      [20ms]
-```
-
-![Span View](/src/assets/img/spanview.png)
-
-:::warning[External API Dependencies]
-External API calls are often the source of performance issues because:
-- Network latency is unpredictable
-- Third-party services may have their own performance issues
-- Timeouts and retries can compound delays
-
-Always monitor external dependencies closely and implement circuit breakers for resilience.
-:::
-
-#### Step 3: Analyze Span Attributes
-```js
-// Stripe API span attributes
-{
-  "http.method": "POST",
-  "http.url": "https://api.stripe.com/v1/charges",
-  "http.status_code": 200,
-  "http.duration": 2600,
-  "stripe.retry_count": 3,
-  "stripe.timeout": 5000
-}
-```
-
-#### Step 4: Root Cause Analysis
-The Stripe API is timing out and retrying. Possible causes:
-- Network connectivity issues
-- Stripe API performance degradation
-- Incorrect timeout configuration
-- Rate limiting
-
-#### Step 5: Solutions
-1. **Increase timeout temporarily**
-2. **Implement circuit breaker pattern**
-3. **Add retry logic with exponential backoff**
-4. **Monitor Stripe's status page**
-
-### Analyzing Database Performance
-
-#### Identifying Slow Queries
-
-Use this filter to find slow database operations:
-```
-span.op:db AND span.duration:>100ms
-```
-
-Common database issues to look for:
-
-1. **Missing Indexes**
-   ```sql
-   -- Slow query without index
-   SELECT * FROM orders WHERE customer_email = 'user@example.com'
-   -- Duration: 500ms, Rows examined: 100,000
-   
-   -- After adding index
-   CREATE INDEX idx_orders_customer_email ON orders(customer_email);
-   -- Duration: 5ms, Rows examined: 3
-   ```
-
-2. **Inefficient Joins**
-   ```sql
-   -- Inefficient
-   SELECT o.*, p.name FROM orders o, products p WHERE o.product_id = p.id
-   
-   -- Better
-   SELECT o.*, p.name FROM orders o INNER JOIN products p ON o.product_id = p.id
-   ```
-
-3. **Large Result Sets**
-   ```sql
-   -- Problem: Loading too much data
-   SELECT * FROM products  -- Returns 10,000 rows
-   
-   -- Solution: Pagination
-   SELECT * FROM products LIMIT 20 OFFSET 0
-   ```
-
-## Creating Custom Dashboards
-
-### Setting Up Performance Dashboards
-
-Create dashboards to monitor key metrics:
-
-#### Frontend Performance Dashboard
-```
-Widgets:
-1. Page Load Times (P50, P95)
-2. JavaScript Error Rate
-3. Largest Contentful Paint (LCP)
-4. First Input Delay (FID)
-5. Cumulative Layout Shift (CLS)
-6. API Response Times
-```
-
-#### Backend Performance Dashboard
-```
-Widgets:
-1. API Response Times by Endpoint
-2. Database Query Performance
-3. Error Rate by Service
-4. Background Job Processing Times
-5. Cache Hit Rates
-6. Memory and CPU Usage
-```
-
-#### Business Metrics Dashboard
-```
-Widgets:
-1. User Registration Rate
-2. Checkout Completion Rate
-3. Payment Success Rate
-4. Order Processing Time
-5. User Session Duration
-```
-
-### Dashboard Query Examples
-
-#### API Performance Over Time
-```sql
-SELECT 
-  time,
-  avg(span.duration) as avg_response_time,
-  count() as request_count,
-  count_if(status, 'error') / count() * 100 as error_rate
-FROM spans
-WHERE span.name LIKE 'GET /api/%'
-  AND timestamp >= now() - interval '24 hours'
-GROUP BY time(1h)
-ORDER BY time;
-```
-
-#### Database Query Performance
-```sql
-SELECT 
-  db.operation,
-  db.table,
-  avg(db.duration) as avg_duration,
-  max(db.duration) as max_duration,
-  count() as query_count
-FROM spans
-WHERE span.op = 'db'
-  AND timestamp >= now() - interval '1 day'
-GROUP BY db.operation, db.table
-ORDER BY avg_duration DESC;
-```
-
-## Setting Up Intelligent Alerts
-
-:::tip[Smart Alerting Strategy]
-The best alerts are:
-- **Actionable**: Tell you what specific action to take
-- **Timely**: Alert before users are significantly impacted  
-- **Relevant**: Focused on business-critical metrics
-- **Contextual**: Include enough information to start debugging immediately
-
-Avoid alerts on vanity metrics that don't require immediate action.
-:::
-
-### Performance-Based Alerts
+The homepage is often the first impression users have of your platform. Poor homepage performance can lead to immediate user abandonment and reduced engagement.
 
 <Steps>
-  1. **Response Time Degradation**
-     ```
-     Alert: API Response Time
-     Condition: p95(span.duration) > 1000ms
-     Time Window: 10 minutes
-     Threshold: 5 consecutive periods
-     ```
+  1. **Homepage Load Time Monitoring**
 
-  2. **Error Rate Spike**
-     ```
-     Alert: High Error Rate
-     Condition: failure_rate() > 5%
-     Time Window: 5 minutes
-     Threshold: Any period
-     ```
+     Track P75 transaction duration for homepage loads:
+     - Initial page load time
+     - Time to interactive
+     - Content rendering performance
+     - API response times for dynamic content
 
-  3. **Database Performance**
-     ```
-     Alert: Slow Database Queries
-     Condition: avg(db.duration) > 200ms
-     Time Window: 15 minutes
-     Filter: span.op:db
-     ```
+     TODO: Add screenshot showing homepage performance widget with P75 load times over time.
 
-  4. **Cache Performance**
-     ```
-     Alert: Low Cache Hit Rate
-     Condition: cache.hit_rate < 80%
-     Time Window: 30 minutes
-     ```
+  2. **Homepage Error Tracking**
+
+     Monitor errors that occur on the homepage:
+     - JavaScript errors affecting functionality
+     - API failures loading course data
+     - Image loading failures
+     - Component rendering errors
+
+     TODO: Add screenshot showing homepage error tracking widget with error counts and types.
+
 </Steps>
 
-### Business Logic Alerts
+## 3. Courses List Experience Monitoring
 
-```
-Alert: Low Conversion Rate
-Condition: checkout.success_rate < 95%
-Time Window: 1 hour
+The courses list is where users discover and browse available content. Issues here directly impact course enrollment and user engagement.
 
-Alert: High Cart Abandonment
-Condition: cart.abandoned_count > 100
-Time Window: 30 minutes
+<Steps>
+  1. **Courses List Performance Monitoring**
 
-Alert: Payment Failures
-Condition: payment.failure_rate > 2%
-Time Window: 10 minutes
-```
+     Track load time and performance metrics:
+     - Page load time for course listings
+     - Search functionality performance
+     - Filtering and sorting response times
+     - Pagination performance
 
-## Advanced Analysis Techniques
+     TODO: Add screenshot showing courses list performance metrics.
 
-### Correlation Analysis
+  2. **Courses List Error Monitoring**
 
-Look for correlations between different metrics:
+     Monitor errors affecting course discovery:
+     - Course data loading failures
+     - Search functionality errors
+     - Image loading issues for course thumbnails
+     - Filter and sort operation failures
 
-1. **Error Rate vs Response Time**: Do errors increase when response times are high?
-2. **Cache Hit Rate vs Database Load**: How does cache performance affect database queries?
-3. **User Geography vs Performance**: Are users in certain regions experiencing slower performance?
+     TODO: Add screenshot showing courses list error tracking.
 
-### Trend Analysis
+  3. **"Add to Favorites" Custom Metric**
 
-Use Sentry's trend detection:
+     Track the custom business metric for user engagement:
+     - Count of favorites added per session
+     - Favorite success/failure rates
+     - User engagement with favorited content
+     - Conversion from favorites to enrollments
 
-1. **Performance Regression Detection**: Automatically detect when performance degrades
-2. **Seasonal Patterns**: Identify patterns related to time of day, week, or special events
-3. **Release Impact**: Correlate performance changes with deployments
+     TODO: Add screenshot showing custom "Add to Favorites" metric widget.
 
-### Custom Metrics for Business Intelligence
+</Steps>
 
-Track business-specific metrics:
+## 4. Course Detail Experience Monitoring
 
-```js
-// E-commerce metrics
-Sentry.metrics.increment('business.order_placed', 1, {
-  tags: {
-    product_category: order.category,
-    payment_method: order.paymentMethod,
-    user_tier: user.tier
-  }
-});
+The course detail page is where enrollment decisions are made. Performance and functionality issues here directly impact conversion rates.
 
-// User engagement metrics
-Sentry.metrics.timing('business.session_duration', sessionDuration, {
-  tags: {
-    user_type: user.type,
-    feature_used: lastFeature
-  }
-});
+<Steps>
+  1. **Course Detail Performance Monitoring**
 
-// Performance impact on business
-Sentry.metrics.distribution('business.checkout_completion_time', checkoutTime, {
-  tags: {
-    performance_tier: getPerformanceTier(pageLoadTime)
-  }
-});
-```
+     Track course detail page performance:
+     - Page load time for individual courses
+     - Video/media loading performance
+     - API response times for course data
+     - Interactive element responsiveness
 
-## Performance Optimization Strategies
+     TODO: Add screenshot showing course detail performance metrics.
 
-### Based on Sentry Data
+  2. **Course Detail Error Monitoring**
 
-1. **Code Splitting**: Use trace data to identify heavy JavaScript bundles
-2. **Database Optimization**: Use query performance data to add indexes
-3. **Caching Strategy**: Use cache hit/miss data to optimize caching
-4. **API Design**: Use trace data to identify chatty APIs that need batching
+     Monitor errors on course detail pages:
+     - Course data loading failures
+     - Media playback errors
+     - Enrollment button functionality
+     - Reviews and ratings loading issues
 
-### Monitoring Optimization Impact
+     TODO: Add screenshot showing course detail error tracking.
 
-After making changes:
+  3. **"Bookmark" Custom Metric**
 
-1. Create a release in Sentry to mark the deployment
-2. Compare performance before and after using Sentry's release comparison
-3. Monitor key metrics for 24-48 hours
-4. Set up alerts to catch any regressions
+     Track the custom business metric for course interest:
+     - Bookmark creation success rates
+     - User bookmark engagement patterns
+     - Conversion from bookmarks to enrollments
+     - Bookmark feature usage trends
 
-## Troubleshooting Common Issues
+     TODO: Add screenshot showing custom "Bookmark" metric widget.
 
-### Missing Traces
+</Steps>
 
-**Problem**: Not seeing expected traces in Sentry
+## Creating the Critical Experience Dashboard
 
-**Solutions**:
-1. Check sample rate configuration
-2. Verify DSN and auth token
-3. Confirm traces are being created with proper attributes
-4. Check for console errors in debug mode
+Now you'll create a comprehensive dashboard that brings together all the Critical Experience metrics in one view.
 
-### Incomplete Traces
+<Steps>
+  1. **Dashboard Setup**
 
-**Problem**: Traces missing spans or showing gaps
+     Create a new dashboard specifically for Sentry Academy Critical Experiences:
+     - Navigate to Dashboards in Sentry
+     - Create new dashboard titled "Sentry Academy - Critical Experiences"
+     - Set up the dashboard layout for optimal visibility
 
-**Solutions**:
-1. Verify trace propagation between services
-2. Check for exceptions that terminate spans early
-3. Ensure proper async/await usage
-4. Verify context is properly passed between operations
+     TODO: Add screenshot showing dashboard creation interface.
 
-### Performance Overhead
+  2. **Adding Authentication Widgets**
 
-**Problem**: Instrumentation impacting application performance
+     Add widgets for authentication monitoring:
+     - Authentication error rate widget
+     - Login performance (P75 response time) widget
+     - Failed login attempts widget
+     - Session timeout rate widget
 
-**Solutions**:
-1. Reduce sample rate in production
-2. Use performance-conscious instrumentation patterns
-3. Avoid instrumenting hot code paths excessively
-4. Monitor instrumentation overhead itself
+     TODO: Add screenshot showing authentication widgets configuration.
+
+  3. **Adding Homepage Widgets**
+
+     Add widgets for homepage experience:
+     - Homepage load time (P75) widget
+     - Homepage error count widget
+     - Time to interactive widget
+     - API response time widget
+
+     TODO: Add screenshot showing homepage widgets configuration.
+
+  4. **Adding Courses List Widgets**
+
+     Add widgets for courses list experience:
+     - Courses list load time widget
+     - Search performance widget
+     - "Add to Favorites" custom metric widget
+     - Courses list error tracking widget
+
+     TODO: Add screenshot showing courses list widgets configuration.
+
+  5. **Adding Course Detail Widgets**
+
+     Add widgets for course detail experience:
+     - Course detail load time widget
+     - "Bookmark" custom metric widget
+     - Enrollment success rate widget
+     - Course detail error tracking widget
+
+     TODO: Add screenshot showing course detail widgets configuration.
+
+</Steps>
+
+## Configuring Critical Experience Alerts
+
+Set up intelligent alerts that notify you when Critical Experiences are degraded, allowing for proactive response before significant business impact.
+
+<Steps>
+  1. **Authentication Flow Alerts**
+
+     Configure alerts for authentication issues:
+     - Alert when authentication error rate exceeds 5%
+     - Alert when login response time P95 exceeds 3 seconds
+     - Alert for authentication service outages
+
+  2. **Performance Degradation Alerts**
+
+     Set up alerts for performance issues:
+     - Alert when any CX touchpoint P75 exceeds baseline by 50%
+     - Alert for elevated error rates in critical flows
+     - Alert for custom metric anomalies (favorites, bookmarks)
+
+  3. **Business Impact Alerts**
+
+     Configure business-focused alerts:
+     - Alert when enrollment conversion rate drops significantly
+     - Alert for user engagement metric degradation
+     - Alert for critical user journey completion rate drops
+
+</Steps>
+
+## Analyzing Critical Experience Data
+
+TODO: Add detailed steps for analyzing CX data, interpreting trends, and making data-driven decisions to improve user experience and business outcomes.
 
 ## Next Steps
 
-Congratulations! You now have comprehensive knowledge of:
-- Setting up distributed tracing and logging
-- Instrumenting spans, metrics, and alerts
-- Monitoring databases, queues, and caches
-- Visualizing and analyzing performance data
+With Critical Experience monitoring in place, you now have visibility into the user flows that matter most to your business. Use this data to:
 
-Continue to the [Wrapping Up](/wrapping-up/) section to review what you've learned and explore advanced Sentry features.
+1. **Prioritize Engineering Efforts**: Focus on issues that impact business-critical flows
+2. **Measure Business Impact**: Connect technical performance to business outcomes
+3. **Proactive Issue Resolution**: Address problems before they significantly impact users
+4. **Optimize User Experience**: Use CX data to guide UX and performance improvements
+
+Continue monitoring your Critical Experiences and iterating on your dashboards and alerts as your application and business priorities evolve.
