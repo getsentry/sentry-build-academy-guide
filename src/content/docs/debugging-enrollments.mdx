@@ -26,9 +26,13 @@ By the end of this module, you will:
 Our enrollment errors are successfully showing up in Sentry when we attempt to enroll in courses; but to get better insights into what's happening beyond the errors and Stack Traces - we can use Tracing and Spans alongside Errors.
 
 <Steps>
-  1. **Configure Custom Traces and Logs on the Frontend**
+  1. **Locate Frontend Enrollment API Service**
 
-     Navigate to the `/apps/frontend/src/services/api.ts` and update the `create` call in the `enrollments` object to include the following custom span:
+     Navigate to the `/apps/frontend/src/services/api.ts` file and find the `enrollments` object with the `create` method.
+
+  2. **Create Frontend Enrollment Span Structure**
+
+     Replace the basic `create` method with a span structure to track enrollment requests:
 
      ```tsx
      create: (courseId: string, userId: string | undefined) => 
@@ -38,37 +42,69 @@ Our enrollment errors are successfully showing up in Sentry when we attempt to e
            op: 'http.client',
            attributes: {
              'enrollment.course_id': courseId,
-             'enrollment.user_id': userId || 'undefined',
-             'enrollment.user_id_provided': !!userId,
            },
          },
          () => {
-           logger.info(logger.fmt`Creating enrollment for course: ${courseId}, user: ${userId || 'undefined'}`);
-           return fetchApi<any>('/enrollments', {
-             method: 'POST',
-             body: JSON.stringify({ courseId }),
-           });
+           // Enrollment logic will be added in next steps
          }
        ),
      ```
 
-     Updating this call will allow us to see the course information being sent form the frontend to the backend server via distributed tracing.
+  3. **Add Frontend User ID Tracking**
 
-  2. **Configure Custom Traces and Logs on the Server**
+     Add user ID attributes to track whether user information is available:
 
-     Navigate to the `/apps/server/src/modules/enrollments/routes.ts` and import the following at the top:
+     ```tsx
+     attributes: {
+       'enrollment.course_id': courseId,
+       'enrollment.user_id': userId || 'undefined',
+       'enrollment.user_id_provided': !!userId,
+     },
+     ```
+
+  4. **Add Frontend Enrollment Logging**
+
+     Inside the span callback, add logging for the enrollment attempt:
+
+     ```tsx
+     () => {
+       logger.info(logger.fmt`Creating enrollment for course: ${courseId}, user: ${userId || 'undefined'}`);
+     }
+     ```
+
+  5. **Complete Frontend Enrollment Request**
+
+     Complete the enrollment implementation with the API call:
+
+     ```tsx
+     () => {
+       logger.info(logger.fmt`Creating enrollment for course: ${courseId}, user: ${userId || 'undefined'}`);
+       return fetchApi<any>('/enrollments', {
+         method: 'POST',
+         body: JSON.stringify({ courseId }),
+       });
+     }
+     ```
+
+  6. **Import Sentry in Backend Enrollment Routes**
+
+     Navigate to the `/apps/server/src/modules/enrollments/routes.ts` file and add the Sentry import at the top:
 
      ```tsx
      import * as Sentry from '@sentry/node';
      ```
 
-     Add the following code after your import to bring the logger options in your application from Sentry:
+  7. **Set Up Backend Enrollment Logging**
+
+     Add the logger destructuring after your import:
 
      ```tsx
      const { logger } = Sentry
      ```
 
-     Update the `enrollmentRoutes.post('/enrollments', async (req, res)` route to include the following custom span:
+  8. **Create Backend Enrollment Span Structure**
+
+     Start replacing the `enrollmentRoutes.post('/enrollments'` route with the basic span structure:
 
      ```tsx
      enrollmentRoutes.post('/enrollments', async (req, res) => {
@@ -86,121 +122,203 @@ Our enrollment errors are successfully showing up in Sentry when we attempt to e
              },
            },
            async (span) => {
-             console.log('🔍 Checking enrollment request:', { userId, courseId });
-             logger.info(logger.fmt`Processing enrollment request for course: ${courseId || 'undefined'}, user: ${userId || 'undefined'}`);
-
-             // Add initial request validation attributes
-             span.setAttributes({
-               'enrollment.request.course_id_provided': !!courseId,
-               'enrollment.request.user_id_provided': !!userId,
-             });
-
-             // First: Validate course ID is provided
-             if (!courseId) {
-               span.setAttributes({
-                 'enrollment.validation.course_id': 'missing',
-                 'enrollment.validation.result': 'failed',
-                 'enrollment.error': 'course_id_required',
-               });
-               console.error('❌ Course ID is missing');
-               res.status(400).json({ error: 'Course ID is required.' });
-               return;
-             }
-
-             logger.info(logger.fmt`Verifying course exists: ${courseId}`);
-
-             const courseCheck = await db
-               .select()
-               .from(courses)
-               .where(eq(courses.id, courseId))
-               .limit(1);
-
-             logger.info('📚 Course check result:', courseCheck);
-
-             if (courseCheck.length === 0) {
-               span.setAttributes({
-                 'enrollment.validation.course_exists': false,
-                 'enrollment.validation.result': 'failed',
-                 'enrollment.error': 'course_not_found',
-               });
-               console.error('❌ Course not found:', courseId);
-               res.status(404).json({ error: `Course with id ${courseId} not found` });
-               return;
-             }
-
-             // Add course details to span
-             const course = courseCheck[0];
-             span.setAttributes({
-               'enrollment.validation.course_exists': true,
-               'enrollment.course.title': course.title,
-               'enrollment.course.category': course.category || 'unknown',
-               'enrollment.course.level': course.level || 'unknown',
-               'enrollment.course.instructor_id': course.instructorId || 'unknown',
-             });
-
-             logger.info(logger.fmt`Course found: "${course.title}" (${course.category})`);
-
-             // Third: Validate user ID is provided
-             if (!userId) {
-               span.setAttributes({
-                 'enrollment.validation.user_id': 'missing',
-                 'enrollment.validation.result': 'failed',
-                 'enrollment.error': 'user_id_missing',
-               });
-               console.error('❌ User ID is missing');
-               throw new Error('User ID is missing');
-             }
-
-             // Add final validation success attributes
-             span.setAttributes({
-               'enrollment.validation.user_id': 'provided',
-               'enrollment.validation.result': 'passed',
-               'enrollment.process.success': true,
-             });
-
-             logger.info(logger.fmt`Enrollment validation successful for user ${userId} in course "${course.title}"`);
-
-             console.log('✅ All validation successful, enrollment approved');
-             res.json({ 
-               success: true, 
-               message: 'Enrollment validation successful',
-               courseId,
-               userId 
-             });
+             // Backend enrollment logic will be added in next steps
            }
          );
 
        } catch (error: any) {
-         Sentry.captureException(error, {
-           tags: {
-             operation: 'enrollment.create.backend',
-             course_id: req.body.courseId || 'undefined',
-             user_id: req.body.userId || 'undefined',
-           },
-           extra: {
-             requestBody: req.body,
-             courseId: req.body.courseId,
-             userId: req.body.userId,
-             hasUserId: !!req.body.userId,
-             hasCourseId: !!req.body.courseId,
-           },
-         });
-
-         logger.error(logger.fmt`Enrollment error for course ${req.body.courseId || 'undefined'}, user ${req.body.userId || 'undefined'}: ${error.message}`);
-
-         console.error('💥 Error during enrollment:', error);
-         console.error('📊 Error details:', {
-           message: error.message,
-           stack: error.stack,
-           userId: req.body.userId,
-           courseId: req.body.courseId,
-         });
-         throw new Error('Failed to enroll in course');
+         // Error handling will be added later
        }
      });
      ```
 
-     Try enrolling in courses again, and if you navigate to Explore > Traces on left navigation menu, you'll be able to search using the `span.description` filter and find your enrollment-related spans.
+  9. **Add Backend Request Logging**
+
+     Inside the backend span, add initial logging for the enrollment request:
+
+     ```tsx
+     async (span) => {
+       console.log('🔍 Checking enrollment request:', { userId, courseId });
+       logger.info(logger.fmt`Processing enrollment request for course: ${courseId || 'undefined'}, user: ${userId || 'undefined'}`);
+     }
+     ```
+
+  10. **Add Request Validation Attributes**
+
+      Add span attributes to track what data was received:
+
+      ```tsx
+      // Add initial request validation attributes
+      span.setAttributes({
+        'enrollment.request.course_id_provided': !!courseId,
+        'enrollment.request.user_id_provided': !!userId,
+      });
+      ```
+
+  11. **Implement Course ID Validation**
+
+      Add course ID validation logic:
+
+      ```tsx
+      // First: Validate course ID is provided
+      if (!courseId) {
+        span.setAttributes({
+          'enrollment.validation.course_id': 'missing',
+          'enrollment.validation.result': 'failed',
+          'enrollment.error': 'course_id_required',
+        });
+        console.error('❌ Course ID is missing');
+        res.status(400).json({ error: 'Course ID is required.' });
+        return;
+      }
+      ```
+
+  12. **Add Course Existence Check Logging**
+
+      Add logging before checking if the course exists:
+
+      ```tsx
+      logger.info(logger.fmt`Verifying course exists: ${courseId}`);
+      ```
+
+  13. **Implement Database Course Lookup**
+
+      Add the database query to verify the course exists:
+
+      ```tsx
+      const courseCheck = await db
+        .select()
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .limit(1);
+
+      logger.info('📚 Course check result:', courseCheck);
+      ```
+
+  14. **Handle Course Not Found**
+
+      Add logic to handle when a course doesn't exist:
+
+      ```tsx
+      if (courseCheck.length === 0) {
+        span.setAttributes({
+          'enrollment.validation.course_exists': false,
+          'enrollment.validation.result': 'failed',
+          'enrollment.error': 'course_not_found',
+        });
+        console.error('❌ Course not found:', courseId);
+        res.status(404).json({ error: `Course with id ${courseId} not found` });
+        return;
+      }
+      ```
+
+  15. **Add Course Details to Span**
+
+      Track the found course details in span attributes:
+
+      ```tsx
+      // Add course details to span
+      const course = courseCheck[0];
+      span.setAttributes({
+        'enrollment.validation.course_exists': true,
+        'enrollment.course.title': course.title,
+        'enrollment.course.category': course.category || 'unknown',
+        'enrollment.course.level': course.level || 'unknown',
+        'enrollment.course.instructor_id': course.instructorId || 'unknown',
+      });
+      ```
+
+  16. **Add Course Found Logging**
+
+      Log the successful course lookup:
+
+      ```tsx
+      logger.info(logger.fmt`Course found: "${course.title}" (${course.category})`);
+      ```
+
+  17. **Implement User ID Validation**
+
+      Add user ID validation logic (this is where the bug will be revealed):
+
+      ```tsx
+      // Third: Validate user ID is provided
+      if (!userId) {
+        span.setAttributes({
+          'enrollment.validation.user_id': 'missing',
+          'enrollment.validation.result': 'failed',
+          'enrollment.error': 'user_id_missing',
+        });
+        console.error('❌ User ID is missing');
+        throw new Error('User ID is missing');
+      }
+      ```
+
+  18. **Add Successful Validation Attributes**
+
+      Track successful validation in span attributes:
+
+      ```tsx
+      // Add final validation success attributes
+      span.setAttributes({
+        'enrollment.validation.user_id': 'provided',
+        'enrollment.validation.result': 'passed',
+        'enrollment.process.success': true,
+      });
+      ```
+
+  19. **Add Success Logging and Response**
+
+      Complete the successful enrollment flow:
+
+      ```tsx
+      logger.info(logger.fmt`Enrollment validation successful for user ${userId} in course "${course.title}"`);
+
+      console.log('✅ All validation successful, enrollment approved');
+      res.json({ 
+        success: true, 
+        message: 'Enrollment validation successful',
+        courseId,
+        userId 
+      });
+      ```
+
+  20. **Add Backend Error Handling**
+
+      Complete the backend route with comprehensive error handling:
+
+      ```tsx
+      } catch (error: any) {
+        Sentry.captureException(error, {
+          tags: {
+            operation: 'enrollment.create.backend',
+            course_id: req.body.courseId || 'undefined',
+            user_id: req.body.userId || 'undefined',
+          },
+          extra: {
+            requestBody: req.body,
+            courseId: req.body.courseId,
+            userId: req.body.userId,
+            hasUserId: !!req.body.userId,
+            hasCourseId: !!req.body.courseId,
+          },
+        });
+
+        logger.error(logger.fmt`Enrollment error for course ${req.body.courseId || 'undefined'}, user ${req.body.userId || 'undefined'}: ${error.message}`);
+
+        console.error('💥 Error during enrollment:', error);
+        console.error('📊 Error details:', {
+          message: error.message,
+          stack: error.stack,
+          userId: req.body.userId,
+          courseId: req.body.courseId,
+        });
+        throw new Error('Failed to enroll in course');
+      }
+      ```
+
+  21. **Test Enrollment Tracing**
+
+      Try enrolling in courses again. Navigate to Explore > Traces in Sentry's left navigation menu, and search using the `span.description` filter to find your enrollment-related spans. You should now see that the User ID is missing from the backend request.
 
 </Steps>
 
@@ -211,9 +329,9 @@ When we look now, we can see that the User ID is not being passed to the backend
 The fix for this is simple - need to update the frontend client to successfully pass the userId to the backend as well. 
 
 <Steps>
-  1. **Update the `enrollments` object in the `/apps/frontend/src/services/api.ts` file**
+  1. **Update Frontend to Include User ID**
 
-     Update the `enrollments` object from the following:
+     In the frontend enrollment request, update the `enrollments` object in `/apps/frontend/src/services/api.ts` from:
 
      ```tsx
      return fetchApi<any>('/enrollments', {
