@@ -23,7 +23,7 @@ By the end of this module, you will:
 Our errors are successfully showing up in Sentry when we attempt to login; but to get better insights into what's happening beyond the errors and Stack Traces - we can use Tracing and Spans alongside Errors.
 
 <Steps>
-  1. **Import Sentry in Frontend Login Component**
+  1. **Add Sentry Import to Frontend Login Component**
 
      Navigate to the `/apps/frontend/src/components/auth/LoginForm.tsx` file and add the Sentry import at the top:
 
@@ -39,9 +39,9 @@ Our errors are successfully showing up in Sentry when we attempt to login; but t
      const { logger } = Sentry
      ```
 
-  3. **Create Frontend Authentication Span**
+  3. **Replace the Complete handleSSO Function**
 
-     Replace the beginning of the 'handleSSO' function to start a custom span for tracking authentication:
+     Replace the entire 'handleSSO' function with this instrumented version:
 
      ```tsx
      const handleSSO = async (provider: string) => {
@@ -58,283 +58,194 @@ Our errors are successfully showing up in Sentry when we attempt to login; but t
              },
            },
            async (span) => {
-             // We'll add the rest of the logic in the next steps
+             const userCredentials = fetchSSOUserCredentials(provider);
+
+             logger.info(logger.fmt`Logging user ${userCredentials.email} in using ${provider}`);
+
+             span.setAttributes({
+               'auth.user.id': userCredentials.id,
+               'auth.user.email': userCredentials.email,
+               'auth.user.name': userCredentials.name,
+               'auth.user.avatar': userCredentials.avatar,
+             });
+
+             const loginSignature = createAuthenticationToken(userCredentials, provider);
+
+             span.setAttributes({
+               'auth.login_signature.defined': loginSignature !== undefined && loginSignature !== null,
+             });
+
+             await ssoLogin(provider);
            }
          );
+
+         navigate('/');
+
        } catch (err: any) {
-         // Error handling will be added in later steps
+         logger.error(logger.fmt`Failed to login with ${provider} - issue with loginSignature`);
+         setError(`Failed to login with ${provider} - issue with loginSignature`);
+         throw err;
        } finally {
          setIsLoading(false);
        }
      };
      ```
 
-  4. **Add User Credential Fetching and Logging**
-
-     Inside the span callback, add user credential fetching with logging:
-
-     ```tsx
-     async (span) => {
-       const userCredentials = fetchSSOUserCredentials(provider);
-
-       logger.info(logger.fmt`Logging user ${userCredentials.email} in using ${provider}`);
-     }
-     ```
-
-  5. **Add User Attributes to Span**
-
-     Continue building the span by adding user-specific attributes:
-
-     ```tsx
-     span.setAttributes({
-       'auth.user.id': userCredentials.id,
-       'auth.user.email': userCredentials.email,
-       'auth.user.name': userCredentials.name,
-       'auth.user.avatar': userCredentials.avatar,
-     });
-     ```
-
-  6. **Generate and Track Login Signature**
-
-     Add login signature generation and tracking:
-
-     ```tsx
-     const loginSignature = createAuthenticationToken(userCredentials, provider);
-
-     span.setAttributes({
-       'auth.login_signature.defined': loginSignature !== undefined && loginSignature !== null,
-     });
-     ```
-
-  7. **Complete Frontend Authentication Flow**
-
-     Complete the authentication flow within the span:
-
-     ```tsx
-     await ssoLogin(provider);
-     ```
-
-  8. **Add Frontend Error Handling and Navigation**
-
-     Complete the handleSSO function with proper error handling:
-
-     ```tsx
-     try {
-       // ... span logic from above steps
-       navigate('/');
-     } catch (err: any) {
-       logger.error(logger.fmt`Failed to login with ${provider} - issue with loginSignature`);
-       setError(`Failed to login with ${provider} - issue with loginSignature`);
-       throw err;
-     } finally {
-       setIsLoading(false);
-     }
-     ```
-
-  9. **Test Frontend Tracing**
+  4. **Test Frontend Tracing**
 
      Try logging in again. Navigate to Explore > Traces in Sentry's left navigation menu, and search using the `span.description` filter with `sso.authentication.frontend` as the value. Check the Logs tab for the log entries created by `logger.info` and `logger.error` calls.
 
-  10. **Import Sentry in Backend Auth Routes**
+  5. **Add Sentry Import to Backend Auth Routes**
 
-      Navigate to the `/apps/server/modules/auth/routes.ts` file and add the Sentry import at the top:
+     Navigate to the `/apps/server/modules/auth/routes.ts` file and add the Sentry import at the top:
 
-      ```tsx
-      import * as Sentry from '@sentry/node';
-      ```
+     ```tsx
+     import * as Sentry from '@sentry/node';
+     ```
 
-  11. **Set Up Backend Logging**
+  6. **Set Up Backend Logging**
 
-      Add the logger destructuring after your imports:
+     Add the logger destructuring after your imports:
 
-      ```tsx
-      const { logger } = Sentry
-      ```
+     ```tsx
+     const { logger } = Sentry
+     ```
 
-  12. **Create Backend Authentication Span Structure**
+  7. **Replace the Complete SSO Route**
 
-      Replace the `authRoutes.post('/sso/:provider'` route with the basic span structure:
+     Replace the entire `authRoutes.post('/sso/:provider'` route with this instrumented version:
 
-      ```tsx
-      authRoutes.post('/sso/:provider', async (req, res) => {
-        try {
-          const { provider } = req.params;
-          const { loginSignature } = req.body;
+     ```tsx
+     authRoutes.post('/sso/:provider', async (req, res) => {
+       try {
+         const { provider } = req.params;
+         const { loginSignature } = req.body;
 
-          await Sentry.startSpan(
-            {
-              name: 'sso.authentication.server',
-              op: 'auth.sso.verify',
-              attributes: {
-                'auth.provider': provider,
-                'auth.login_signature.provided': !!loginSignature,
-                'http.method': req.method,
-                'http.route': '/sso/:provider',
-              },
-            },
-            async (span) => {
-              // Backend logic will be added in next steps
-            }
-          );
-        } catch (error: any) {
-          // Error handling will be added later
-        }
-      });
-      ```
+         await Sentry.startSpan(
+           {
+             name: 'sso.authentication.server',
+             op: 'auth.sso.verify',
+             attributes: {
+               'auth.provider': provider,
+               'auth.login_signature.provided': !!loginSignature,
+               'http.method': req.method,
+               'http.route': '/sso/:provider',
+             },
+           },
+           async (span) => {
+             logger.info(logger.fmt`SSO login attempt with ${provider}`);
+             logger.info(logger.fmt`Login signature provided: ${!!loginSignature}`);
 
-  13. **Add Backend Request Logging and Attributes**
+             // Add more attributes based on request data
+             span.setAttributes({
+               'auth.request.body_size': JSON.stringify(req.body).length,
+               'auth.request.has_signature': loginSignature !== undefined,
+             });
 
-      Inside the backend span, add initial logging and request attributes:
+             // TOFIX Module 1: SSO Login with missing login signature
+             const signaturePayload = JSON.parse(atob(loginSignature)); // This will throw when loginSignature is undefined
 
-      ```tsx
-      async (span) => {
-        logger.info(logger.fmt`SSO login attempt with ${provider}`);
-        logger.info(logger.fmt`Login signature provided: ${!!loginSignature}`);
+             // Add signature payload details to span
+             span.setAttributes({
+               'auth.signature.user_id': signaturePayload.sub || null,
+               'auth.signature.email': signaturePayload.email || null,
+               'auth.signature.name': signaturePayload.name || null,
+               'auth.signature.provider': signaturePayload.provider || null,
+               'auth.signature.issued_at': signaturePayload.iat || null,
+               'auth.signature.expires_at': signaturePayload.exp || null,
+               'auth.signature.has_user_data': !!(signaturePayload.userData),
+             });
 
-        // Add more attributes based on request data
-        span.setAttributes({
-          'auth.request.body_size': JSON.stringify(req.body).length,
-          'auth.request.has_signature': loginSignature !== undefined,
-        });
-      }
-      ```
+             // Use the rich fake user data from the signature payload, with sensible defaults
+             const fakeUserData = signaturePayload.userData || {};
 
-  14. **Add Signature Validation Logic**
+             // Add user data details to span
+             span.setAttributes({
+               'auth.user.id': fakeUserData.id || null,
+               'auth.user.email': fakeUserData.email || null,
+               'auth.user.name': fakeUserData.name || null,
+               'auth.user.company': fakeUserData.company || null,
+               'auth.user.job_title': fakeUserData.jobTitle || null,
+             });
 
-      Add the signature parsing logic (this is where the bug exists):
+             const ssoUser = {
+               id: fakeUserData.id || createId(),
+               email: fakeUserData.email || `${provider}.user@example.com`,
+               name: fakeUserData.name || `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
+               firstName: fakeUserData.firstName || 'Demo',
+               lastName: fakeUserData.lastName || 'User',
+               username: fakeUserData.username || 'demo.user',
+               avatar: fakeUserData.avatar || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg',
+               company: fakeUserData.company || 'Demo Company',
+               jobTitle: fakeUserData.jobTitle || 'Software Developer',
+               phone: fakeUserData.phone || '+1-555-0123',
+               workEmail: fakeUserData.workEmail || fakeUserData.email,
+               role: 'student',
+               provider: provider,
+               signatureClaims: {
+                 sub: signaturePayload.sub,
+                 exp: signaturePayload.exp,
+                 metadata: {
+                   permissions: [],
+                   roles: []
+                 }
+               },
+               socialProfile: {
+                 profileImage: fakeUserData.avatar || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg',
+                 verified: true,
+                 provider: provider
+               },
+               linkedAccounts: [{
+                 provider: provider,
+                 externalId: signaturePayload.sub,
+                 profile: {
+                   username: fakeUserData.username || (fakeUserData.email || signaturePayload.email || 'user').split('@')[0],
+                   avatar: fakeUserData.avatar || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg'
+                 }
+               }]
+             };
 
-      ```tsx
-      // TOFIX Module 1: SSO Login with missing login signature
-      const signaturePayload = JSON.parse(atob(loginSignature)); // This will throw when loginSignature is undefined
-      ```
+             // Add final authentication result to span
+             span.setAttributes({
+               'auth.result.user_id': ssoUser.id,
+               'auth.result.success': true,
+               'auth.result.provider_verified': true,
+             });
 
-  15. **Add Signature Payload Attributes**
+             const responseData = {
+               user: ssoUser,
+               token: `sso-token-${createId()}`,
+               expiresIn: '24h'
+             };
 
-      Continue with signature payload attribute tracking:
+             logger.info(logger.fmt`Successful SSO login with ${provider}`);
+             res.json(responseData);
+           }
+         );
 
-      ```tsx
-      // Add signature payload details to span
-      span.setAttributes({
-        'auth.signature.user_id': signaturePayload.sub || null,
-        'auth.signature.email': signaturePayload.email || null,
-        'auth.signature.name': signaturePayload.name || null,
-        'auth.signature.provider': signaturePayload.provider || null,
-        'auth.signature.issued_at': signaturePayload.iat || null,
-        'auth.signature.expires_at': signaturePayload.exp || null,
-        'auth.signature.has_user_data': !!(signaturePayload.userData),
-      });
-      ```
+       } catch (error: any) {
+         Sentry.captureException(error, {
+           tags: {
+             operation: 'sso.authentication.backend',
+             provider: req.params.provider,
+           },
+           extra: {
+             provider: req.params.provider,
+             hasLoginSignature: !!req.body.loginSignature,
+             requestBody: req.body,
+           },
+         });
 
-  16. **Create User Object from Signature**
+         logger.error(logger.fmt`SSO login error for ${req.params.provider}:`, error);
 
-      Create the user object using the signature payload:
+         throw error;
+       }
+     });
+     ```
 
-      ```tsx
-      // Use the rich fake user data from the signature payload, with sensible defaults
-      const fakeUserData = signaturePayload.userData || {};
+  8. **Test Backend Tracing**
 
-      // Add user data details to span
-      span.setAttributes({
-        'auth.user.id': fakeUserData.id || null,
-        'auth.user.email': fakeUserData.email || null,
-        'auth.user.name': fakeUserData.name || null,
-        'auth.user.company': fakeUserData.company || null,
-        'auth.user.job_title': fakeUserData.jobTitle || null,
-      });
-      ```
-
-  17. **Build Complete User Profile**
-
-      Build the complete SSO user profile:
-
-      ```tsx
-      const ssoUser = {
-        id: fakeUserData.id || createId(),
-        email: fakeUserData.email || `${provider}.user@example.com`,
-        name: fakeUserData.name || `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
-        firstName: fakeUserData.firstName || 'Demo',
-        lastName: fakeUserData.lastName || 'User',
-        username: fakeUserData.username || 'demo.user',
-        avatar: fakeUserData.avatar || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg',
-        company: fakeUserData.company || 'Demo Company',
-        jobTitle: fakeUserData.jobTitle || 'Software Developer',
-        phone: fakeUserData.phone || '+1-555-0123',
-        workEmail: fakeUserData.workEmail || fakeUserData.email,
-        role: 'student',
-        provider: provider,
-        signatureClaims: {
-          sub: signaturePayload.sub,
-          exp: signaturePayload.exp,
-          metadata: {
-            permissions: [],
-            roles: []
-          }
-        },
-        socialProfile: {
-          profileImage: fakeUserData.avatar || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg',
-          verified: true,
-          provider: provider
-        },
-        linkedAccounts: [{
-          provider: provider,
-          externalId: signaturePayload.sub,
-          profile: {
-            username: fakeUserData.username || (fakeUserData.email || signaturePayload.email || 'user').split('@')[0],
-            avatar: fakeUserData.avatar || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg'
-          }
-        }]
-      };
-      ```
-
-  18. **Add Success Attributes and Response**
-
-      Complete the successful authentication flow:
-
-      ```tsx
-      // Add final authentication result to span
-      span.setAttributes({
-        'auth.result.user_id': ssoUser.id,
-        'auth.result.success': true,
-        'auth.result.provider_verified': true,
-      });
-
-      const responseData = {
-        user: ssoUser,
-        token: `sso-token-${createId()}`,
-        expiresIn: '24h'
-      };
-
-      logger.info(logger.fmt`Successful SSO login with ${provider}`);
-      res.json(responseData);
-      ```
-
-  19. **Add Backend Error Handling**
-
-      Complete the backend route with comprehensive error handling:
-
-      ```tsx
-      } catch (error: any) {
-        Sentry.captureException(error, {
-          tags: {
-            operation: 'sso.authentication.backend',
-            provider: req.params.provider,
-          },
-          extra: {
-            provider: req.params.provider,
-            hasLoginSignature: !!req.body.loginSignature,
-            requestBody: req.body,
-          },
-        });
-
-        logger.error(logger.fmt`SSO login error for ${req.params.provider}:`, error);
-
-        throw error;
-      }
-      ```
-
-  20. **Test Backend Tracing**
-
-      Try logging in again and observe the trace and logs by viewing the Explore > Traces and Logs menus in Sentry. You should now see the complete authentication flow traced from frontend to backend.
+     Try logging in again and observe the trace and logs by viewing the Explore > Traces and Logs menus in Sentry. You should now see the complete authentication flow traced from frontend to backend, and notice that the loginSignature is being created on the frontend but not being passed properly to the server.
 
 </Steps>
 
