@@ -77,10 +77,7 @@ Select `React` and `Node.js` as the platforms respectively.
 
    Sentry.init({
      dsn: '<Your Sentry DSN>',
-
-     
      sendDefaultPii: true,
-
      integrations: [
        Sentry.browserTracingIntegration(),
        Sentry.replayIntegration(),
@@ -92,15 +89,11 @@ Select `React` and `Node.js` as the platforms respectively.
            matchRoutes,
          }),
      ],
-
      _experiments: {
        enableLogs: true,
      },
-
      tracesSampleRate: 1.0,
-
      tracePropagationTargets: ["localhost:3001"],
-
      replaysSessionSampleRate: 1.0,
      replaysOnErrorSampleRate: 1.0,
    });
@@ -116,15 +109,14 @@ Select `React` and `Node.js` as the platforms respectively.
    import './index.css';
 
    createRoot(document.getElementById('root')!, {
-
      onUncaughtError: Sentry.reactErrorHandler((error, errorInfo) => {
        console.warn('Uncaught error', error, errorInfo.componentStack);
      }),
      onCaughtError: Sentry.reactErrorHandler(),
      onRecoverableError: Sentry.reactErrorHandler(),
-     }).render(
-       <App />
-     );
+   }).render(
+     <App />
+   );
    ```
 
 5. **Create your ErrorBoundary**
@@ -185,8 +177,6 @@ Select `React` and `Node.js` as the platforms respectively.
 
    const SentryRoutes = Sentry.withSentryReactRouterV7Routing(Routes);
 
-      // Existing content
-
    function App() {
      return (
        <AuthProvider>
@@ -194,11 +184,17 @@ Select `React` and `Node.js` as the platforms respectively.
            <Router>
              <SentryRoutes>
                <Route path="/login" element={<LoginPage />} errorElement={<ErrorBoundary />} />
-               // Include the <ErrorBoundary /> component in any route that you want to be monitored by Sentry
+               <Route path="/" element={<HomePage />} errorElement={<ErrorBoundary />} />
+             </SentryRoutes>
+           </Router>
+         </UserStateProvider>
+       </AuthProvider>
+     );
+   }
    ```
 </Steps>
 
-These configurations will setup your React frontend to leverage all of Sentry's core capabiltiies and ensure you're capturing Errors, Traces, Logs, and Replays within your frontend application. Let's move onto the backend.
+These configurations will setup your React frontend to leverage all of Sentry's core capabilities and ensure you're capturing Errors, Traces, Logs, and Replays within your frontend application. Let's move onto the backend.
 
 ## Configuring Sentry in your Backend (Node.js)
 
@@ -218,13 +214,10 @@ These configurations will setup your React frontend to leverage all of Sentry's 
 
    Sentry.init({
      dsn: '<Your Sentry DSN>',
-
      _experiments: {
        enableLogs: true,
      },
-
      debug: true,
-
      tracesSampleRate: 1.0,
    });
    ```
@@ -279,8 +272,7 @@ These configurations will setup your React frontend to leverage all of Sentry's 
 
 </Steps>
 
-
-With these configurations in place, you've now got Sentry setup to monitor your application acrosss both the frontend and server side implementations. 
+With these configurations in place, you've now got Sentry setup to monitor your application across both the frontend and server side implementations. 
 
 If you are running your application currently, it might be a good idea to toss a restart on it after all of these configurations. 
 
@@ -288,7 +280,7 @@ If you are running your application currently, it might be a good idea to toss a
 pnpm run dev
 ```
 
-Once thats loaded, you can browse to https://localhost:5173 to view Sentry Academy. 
+Once that's loaded, you can browse to https://localhost:5173 to view Sentry Academy. 
 
 <ScaledImage 
   src="/assets/img/academy.png" 

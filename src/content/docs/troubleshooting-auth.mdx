@@ -18,26 +18,30 @@ By the end of this module, you will:
 - Implement logs in your application to give you more context around the issues happening within your application
 - Search and review logs to help troubleshoot issues in your application
 
-## Implementing Our Custom Spans and Logs
+## Frontend Implementation
 
-Our errors are successfully showing up in Sentry when we attempt to login; but to get better insights into what's happening beyond the errors and Stack Traces - we can use Tracing and Spans alongside Errors.
+Let's start by instrumenting the frontend authentication flow to track login attempts and user credential processing.
 
 <Steps>
-  1. **Configure Custom Traces and Logs on the Frontend**
+  1. **Add Sentry Import to Frontend Login Component**
 
-     Navigate to the `/apps/frontend/src/components/auth/LoginForm.tsx` file and import the following at the top:
+     Navigate to the `/apps/frontend/src/components/auth/LoginForm.tsx` file and add the Sentry import at the top:
 
      ```tsx
      import * as Sentry from '@sentry/react';
      ```
 
-     Add the following code after your import to bring the logger options in your application from Sentry:
+  2. **Set Up Frontend Logging**
+
+     Add the logger destructuring after your imports to access Sentry's logging functionality:
 
      ```tsx
      const { logger } = Sentry
      ```
 
-     And replace the 'handleSSO' function with the following updated version:
+  3. **Replace the Complete handleSSO Function**
+
+     Replace the entire 'handleSSO' function with this instrumented version:
 
      ```tsx
      const handleSSO = async (provider: string) => {
@@ -87,29 +91,36 @@ Our errors are successfully showing up in Sentry when we attempt to login; but t
      };
      ```
 
-     This will create a custom span that tracks relevant information being passed to the server from your frontend, as well as instrument logs that support troubleshooting.
+  4. **Test Frontend Tracing**
 
-     Try logging in again, and if you navigate to Explore > Traces on left navigation menu, you'll be able to search using the `span.description` filter and `sso.authentication.frontend` as the value.
+     Try logging in again. Navigate to Explore > Traces in Sentry's left navigation menu, and search using the `span.description` filter with `sso.authentication.frontend` as the value. Check the Logs tab for the log entries created by `logger.info` and `logger.error` calls.
 
-     If you navigate to the `Logs` tab, you'll be able to search for the logs that were created by the `logger.info` and `logger.error` calls.
+</Steps>
 
-     This only handles the frontend however, so let's instrument the backend as well.
+## Backend Implementation
 
-  2. **Configure Custom Traces and Logs on the Server**
+Now let's instrument the backend authentication flow to trace the server-side processing and identify where the issue occurs.
 
-     Navigate to the `/apps/server/modules/auth/routes.ts` file and import the following at the top:
+<Steps>
+  1. **Add Sentry Import to Backend Auth Routes**
+
+     Navigate to the `/apps/server/modules/auth/routes.ts` file and add the Sentry import at the top:
 
      ```tsx
      import * as Sentry from '@sentry/node';
      ```
 
-     Add the following code after your import to bring the logger options in your application from Sentry:
+  2. **Set Up Backend Logging**
+
+     Add the logger destructuring after your imports:
 
      ```tsx
      const { logger } = Sentry
      ```
 
-     And replace the `authRoutes.post('/sso/:provider'` route with this (really long) version:
+  3. **Replace the Complete SSO Route**
+
+     Replace the entire `authRoutes.post('/sso/:provider'` route with this instrumented version:
 
      ```tsx
      authRoutes.post('/sso/:provider', async (req, res) => {
@@ -239,22 +250,24 @@ Our errors are successfully showing up in Sentry when we attempt to login; but t
      });
      ```
 
-     Just like on our frontend, this will continue to trace the request through to the server, and instrument logs that support troubleshooting on the server side.
+  4. **Test Backend Tracing**
 
-     You can observe the trace and logs by viewing the same menus you used previously on the left hand side.
+     Try logging in again and observe the trace and logs by viewing the Explore > Traces and Logs menus in Sentry. You should now see the complete authentication flow traced from frontend to backend, and notice that the loginSignature is being created on the frontend but not being passed properly to the server.
 
 </Steps>
 
-When we explore these, we can see an inconsistency - the loginSignature is being created on the frontend, but not on the server.
+## Analyzing the Issue
+
+When we explore these traces and logs, we can see an inconsistency - the loginSignature is being created on the frontend, but not being passed properly to the server.
 
 ## Fixing the Issue
 
 Fortunately the issue is a trivial one to fix! We determined that our loginSignature wasn't being passed properly from the frontend to the server, and we can add it to the login request.
 
 <Steps>
-  1. **Update our `handleSSO` function to include the loginSignature**
+  1. **Update Frontend to Pass Login Signature**
 
-     Replace:
+     In the frontend authentication flow, replace:
 
      ```tsx
      await ssoLogin(provider);

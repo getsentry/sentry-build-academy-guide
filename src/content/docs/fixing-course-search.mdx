@@ -22,26 +22,30 @@ By the end of this module, you will:
 - Compare values across spans to understand where its breaking in the application
 - Extend our logs to include context around the search issues in the application
 
-## Implementing Our Custom Spans and Logs
+## Frontend Implementation
 
-Our search errors are successfully showing up in Sentry when we attempt to search for courses; but to get better insights into what's happening beyond the errors and Stack Traces - we can use Tracing and Spans alongside Errors.
+Let's start by instrumenting the frontend search functionality to track search requests and parameters being sent to the backend.
 
 <Steps>
-  1. **Configure Custom Traces and Logs on the Frontend**
+  1. **Add Sentry Import to Frontend API Service**
 
-     Navigate to the `/apps/frontend/src/services/api.ts` file and import the following at the top:
+     Navigate to the `/apps/frontend/src/services/api.ts` file and add the Sentry import at the top:
 
      ```tsx
      import * as Sentry from '@sentry/react';
      ```
 
-     Add the following code after your import to bring the logger options in your application from Sentry:
+  2. **Set Up Frontend Search Logging**
+
+     Add the logger destructuring after your import to access Sentry's logging functionality:
 
      ```tsx
      const { logger } = Sentry
      ```
 
-     Replace the `search` call with the following:
+  3. **Replace the Complete Search Courses Method**
+
+     Replace the `search.courses` method with this instrumented version:
 
      ```tsx
      search: {
@@ -63,21 +67,32 @@ Our search errors are successfully showing up in Sentry when we attempt to searc
      },
      ```
 
-  2. **Configure Custom Traces and Logs on the Server**
+</Steps>
 
-     Navigate to the `/apps/server/src/modules/search/routes.ts` file and import the following at the top:
+## Backend Implementation
+
+Now let's instrument the backend search functionality to trace server-side processing and identify the parameter mismatch issue.
+
+<Steps>
+  1. **Add Sentry Import to Backend Search Routes**
+
+     Navigate to the `/apps/server/src/modules/search/routes.ts` file and add the Sentry import at the top:
 
      ```tsx
      import * as Sentry from '@sentry/node';
      ```
 
-     Add the following code after your import to bring the logger options in your application from Sentry:
+  2. **Set Up Backend Search Logging**
+
+     Add the logger destructuring after your import:
 
      ```tsx
      const { logger } = Sentry
      ```
 
-     Replace the `searchRoutes.get('/search/courses', async (req, res) => {` route with the following:
+  3. **Replace the Complete Search Route**
+
+     Replace the entire `searchRoutes.get('/search/courses'` route with this instrumented version:
 
      ```tsx
      searchRoutes.get('/search/courses', async (req, res) => {
@@ -174,9 +189,13 @@ Our search errors are successfully showing up in Sentry when we attempt to searc
      });
      ```
 
-     Try searching for courses again, and if you navigate to Explore > Traces on left navigation menu, you'll be able to search using the `span.description` filter and find your search-related spans.
+  4. **Test Search Tracing**
+
+     Try searching for courses again. Navigate to Explore > Traces in Sentry's left navigation menu, and search using the `span.description` filter to find your search-related spans. You should now see the parameter mismatch clearly in the traces and logs - the frontend is sending a `query` parameter, but the backend is expecting a `q` parameter instead.
 
 </Steps>
+
+## Analyzing the Issue
 
 When we explore these traces and logs, we can see an inconsistency - the frontend is sending a `query` parameter, but the backend is expecting a `q` parameter instead.
 
