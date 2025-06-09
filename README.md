@@ -17,7 +17,7 @@ Sentry Build is a comprehensive hands-on workshop that teaches developers how to
 
 The workshop content is organized into 4 comprehensive modules:
 
-1. **Getting Started with Tracing and Logs** - Set up Sentry tracing and logging in your Vite frontend and Bun backend application.Add commentMore actions
+1. **Getting Started with Tracing and Logs** - Set up Sentry tracing and logging in your Vite frontend and Bun backend application.
 2. **Instrumenting Span Attributes, Metrics, and Alerts** - Learn to add custom spans, attributes, and metrics to track your application's behavior.
 3. **Tracing Database, Queues, and Caches** - Instrument database queries, background jobs, and caching layers for complete visibility.
 4. **Visualizing Traces in Sentry** - Master Sentry's trace visualization tools to debug performance issues and optimize your application.
