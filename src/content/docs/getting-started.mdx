@@ -39,7 +39,7 @@ Select `React` and `Node.js` as the platforms respectively.
 1. **Install Sentry SDK**
 
    ```bash
-   pnpm add @sentry/react @sentry/vite-plugin
+   pnpm add @sentry/react @sentry/vite-plugin --filter frontend
    ```
 
 2. **Configure Vite Plugin**
@@ -68,7 +68,7 @@ Select `React` and `Node.js` as the platforms respectively.
 
 3. **Initialize Sentry**
 
-   Create `src/instrument.js`:
+   Create `./apps/frontend/src/instrument.js`:
 
    ```js
    import * as Sentry from "@sentry/react";
@@ -128,6 +128,8 @@ Select `React` and `Node.js` as the platforms respectively.
    ```
 
 5. **Create your ErrorBoundary**
+
+  Create `./apps/server/src/components/ErrorBoundary.ts`:
 
    ```tsx
    import * as Sentry from '@sentry/react';
@@ -206,7 +208,7 @@ These configurations will setup your React frontend to leverage all of Sentry's 
 1. **Install Sentry SDK for Node.js**
 
    ```bash
-   pnpm add @sentry/node
+   pnpm add @sentry/node --filter server
    ```
 
 2. **Configure Sentry in your Node.js Server**
@@ -233,6 +235,7 @@ These configurations will setup your React frontend to leverage all of Sentry's 
 
    ```js
    import './instrument.ts';
+   import * as Sentry from '@sentry/node';
 
    // Add this after all routes,
    // but before any and other error-handling middlewares are defined.
@@ -274,7 +277,7 @@ These configurations will setup your React frontend to leverage all of Sentry's 
 4. **Move through the Source Map configuration**
 
    ```bash
-   npx @sentry/wizard@latest -i sourcemaps
+   cd apps/server && npx @sentry/wizard@latest -i sourcemaps
    ```
 
 </Steps>
@@ -285,7 +288,7 @@ With these configurations in place, you've now got Sentry setup to monitor your 
 If you are running your application currently, it might be a good idea to toss a restart on it after all of these configurations. 
 
 ```bash
-pnpm run dev
+pnpm dev
 ```
 
 Once thats loaded, you can browse to https://localhost:5173 to view Sentry Academy. 
