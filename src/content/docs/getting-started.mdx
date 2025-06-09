@@ -40,7 +40,7 @@ Select `React` and `Node.js` as the platforms respectively.
 1. **Install Sentry SDK**
 
    ```bash
-   pnpm add @sentry/react @sentry/vite-plugin --filter frontend
+   npm install @sentry/react @sentry/vite-plugin
    ```
 
 2. **Configure Vite Plugin**
@@ -207,7 +207,7 @@ These configurations will setup your React frontend to leverage all of Sentry's 
 1. **Install Sentry SDK for Node.js**
 
    ```bash
-   pnpm add @sentry/node --filter server
+   npm install @sentry/node
    ```
 
 2. **Configure Sentry in your Node.js Server**
@@ -283,7 +283,7 @@ With these configurations in place, you've now got Sentry setup to monitor your 
 If you are running your application currently, it might be a good idea to toss a restart on it after all of these configurations. 
 
 ```bash
-pnpm dev
+npm run dev
 ```
 
 Once that's loaded, you can browse to https://localhost:5173 to view Sentry Academy. 
