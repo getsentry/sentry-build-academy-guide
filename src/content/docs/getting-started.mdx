@@ -36,15 +36,17 @@ You'll need to take note of your Sentry DSNs along the way, which you receive wh
 Select `React` and `Node.js` as the platforms respectively.
 
 <Steps>
-1. **Install Sentry SDK**
+1. **Install Sentry React SDK and Vite Plugin**
+
+   Install the required Sentry packages for React and Vite integration:
 
    ```bash
    pnpm add @sentry/react @sentry/vite-plugin
    ```
 
-2. **Configure Vite Plugin**
+2. **Configure Vite Plugin for Source Maps**
 
-   Update your `vite.config.js`:
+   Update your `vite.config.js` to include the Sentry Vite plugin for source map uploads:
 
    ```js
    import { defineConfig } from 'vite'
@@ -66,9 +68,9 @@ Select `React` and `Node.js` as the platforms respectively.
    })
    ```
 
-3. **Initialize Sentry**
+3. **Create Sentry Instrumentation File**
 
-   Create `src/instrument.js`:
+   Create `src/instrument.js` for your Sentry configuration:
 
    ```js
    import * as Sentry from "@sentry/react";
@@ -77,36 +79,62 @@ Select `React` and `Node.js` as the platforms respectively.
 
    Sentry.init({
      dsn: '<Your Sentry DSN>',
-
-     
      sendDefaultPii: true,
-
-     integrations: [
-       Sentry.browserTracingIntegration(),
-       Sentry.replayIntegration(),
-       Sentry.reactRouterV7BrowserTracingIntegration({
-           useEffect: useEffect,
-           useLocation,
-           useNavigationType,
-           createRoutesFromChildren,
-           matchRoutes,
-         }),
-     ],
-
      _experiments: {
        enableLogs: true,
      },
-
      tracesSampleRate: 1.0,
-
      tracePropagationTargets: ["localhost:3001"],
-
      replaysSessionSampleRate: 1.0,
      replaysOnErrorSampleRate: 1.0,
    });
    ```
 
-4. **Import and update your `main.tsx` entry point**
+4. **Configure Browser Tracing Integration**
+
+   Add the browser tracing integration to your `instrument.js`:
+
+   ```js
+   // Add this to the integrations array in your Sentry.init call
+   integrations: [
+     Sentry.browserTracingIntegration(),
+   ],
+   ```
+
+5. **Configure Session Replay Integration**
+
+   Add session replay integration to capture user sessions:
+
+   ```js
+   // Add this to the integrations array in your Sentry.init call
+   integrations: [
+     Sentry.browserTracingIntegration(),
+     Sentry.replayIntegration(),
+   ],
+   ```
+
+6. **Configure React Router 7 Integration**
+
+   Add React Router 7 specific tracing integration:
+
+   ```js
+   // Add this to the integrations array in your Sentry.init call
+   integrations: [
+     Sentry.browserTracingIntegration(),
+     Sentry.replayIntegration(),
+     Sentry.reactRouterV7BrowserTracingIntegration({
+       useEffect: useEffect,
+       useLocation,
+       useNavigationType,
+       createRoutesFromChildren,
+       matchRoutes,
+     }),
+   ],
+   ```
+
+7. **Update Main Entry Point**
+
+   Import the instrumentation in your `main.tsx` before any other imports:
 
    ```js
    import './instrument.js';
@@ -114,20 +142,27 @@ Select `React` and `Node.js` as the platforms respectively.
    import * as Sentry from '@sentry/react';
    import App from './App.tsx';
    import './index.css';
+   ```
 
+8. **Configure React Error Handling**
+
+   Add Sentry error handlers to your React root in `main.tsx`:
+
+   ```js
    createRoot(document.getElementById('root')!, {
-
      onUncaughtError: Sentry.reactErrorHandler((error, errorInfo) => {
        console.warn('Uncaught error', error, errorInfo.componentStack);
      }),
      onCaughtError: Sentry.reactErrorHandler(),
      onRecoverableError: Sentry.reactErrorHandler(),
-     }).render(
-       <App />
-     );
+   }).render(
+     <App />
+   );
    ```
 
-5. **Create your ErrorBoundary**
+9. **Create Error Boundary Component**
+
+   Create `src/components/ErrorBoundary.tsx` for route-level error handling:
 
    ```tsx
    import * as Sentry from '@sentry/react';
@@ -177,39 +212,54 @@ Select `React` and `Node.js` as the platforms respectively.
    export default ErrorBoundary;
    ```
 
-6. **Update your `App.tsx` to include Sentry Error Boundary and React Router**
+10. **Configure Sentry Router Wrapper**
 
-   ```tsx
-   import * as Sentry from '@sentry/react';
-   import ErrorBoundary from './components/ErrorBoundary';
+    Import Sentry router wrapper in your `App.tsx`:
 
-   const SentryRoutes = Sentry.withSentryReactRouterV7Routing(Routes);
+    ```tsx
+    import * as Sentry from '@sentry/react';
+    import ErrorBoundary from './components/ErrorBoundary';
 
-      // Existing content
+    const SentryRoutes = Sentry.withSentryReactRouterV7Routing(Routes);
+    ```
 
-   function App() {
-     return (
-       <AuthProvider>
-         <UserStateProvider>
-           <Router>
-             <SentryRoutes>
-               <Route path="/login" element={<LoginPage />} errorElement={<ErrorBoundary />} />
-               // Include the <ErrorBoundary /> component in any route that you want to be monitored by Sentry
-   ```
+11. **Add Error Boundaries to Routes**
+
+    Update your route configuration to include error boundaries:
+
+    ```tsx
+    function App() {
+      return (
+        <AuthProvider>
+          <UserStateProvider>
+            <Router>
+              <SentryRoutes>
+                <Route path="/login" element={<LoginPage />} errorElement={<ErrorBoundary />} />
+                <Route path="/" element={<HomePage />} errorElement={<ErrorBoundary />} />
+                {/* Add errorElement={<ErrorBoundary />} to all routes you want monitored */}
+              </SentryRoutes>
+            </Router>
+          </UserStateProvider>
+        </AuthProvider>
+      );
+    }
+    ```
 </Steps>
 
-These configurations will setup your React frontend to leverage all of Sentry's core capabiltiies and ensure you're capturing Errors, Traces, Logs, and Replays within your frontend application. Let's move onto the backend.
+These configurations will setup your React frontend to leverage all of Sentry's core capabilities and ensure you're capturing Errors, Traces, Logs, and Replays within your frontend application. Let's move onto the backend.
 
 ## Configuring Sentry in your Backend (Node.js)
 
 <Steps>
-1. **Install Sentry SDK for Node.js**
+1. **Install Sentry Node SDK**
+
+   Install the Sentry SDK for your Node.js server:
 
    ```bash
    pnpm add @sentry/node
    ```
 
-2. **Configure Sentry in your Node.js Server**
+2. **Create Server Instrumentation File**
 
    Create `instrument.ts` in your server directory:
 
@@ -218,30 +268,45 @@ These configurations will setup your React frontend to leverage all of Sentry's 
 
    Sentry.init({
      dsn: '<Your Sentry DSN>',
-
      _experiments: {
        enableLogs: true,
      },
-
      debug: true,
-
      tracesSampleRate: 1.0,
    });
    ```
 
-2. **Add instrument.ts to your server entry point - index.ts**
+3. **Import Instrumentation in Server Entry Point**
+
+   Add the instrumentation import at the very top of your `index.ts`:
 
    ```js
    import './instrument.ts';
+   
+   // ... rest of your imports and server code
+   ```
 
+4. **Configure Express Error Handler**
+
+   Add Sentry's Express error handler after all routes but before other error middleware:
+
+   ```js
    // Add this after all routes,
    // but before any and other error-handling middlewares are defined.
    Sentry.setupExpressErrorHandler(app);
    ```
 
-3. **Update the esbuild configuration to include Sentry**
+5. **Install Sentry ESBuild Plugin**
 
-   Edit `build.js` to include Sentry
+   Install the plugin for source map uploads:
+
+   ```bash
+   pnpm add @sentry/esbuild-plugin
+   ```
+
+6. **Configure ESBuild with Sentry Plugin**
+
+   Update your `build.js` to include Sentry source map uploads:
 
    ```js
    import 'dotenv/config';
@@ -271,24 +336,26 @@ These configurations will setup your React frontend to leverage all of Sentry's 
    });
    ```
 
-4. **Move through the Source Map configuration**
+7. **Configure Source Maps with Sentry Wizard**
+
+   Run the Sentry wizard to complete source map setup:
 
    ```bash
    npx @sentry/wizard@latest -i sourcemaps
    ```
 
+8. **Restart Your Application**
+
+   Restart the development server to apply all configurations:
+
+   ```bash
+   pnpm run dev
+   ```
 </Steps>
 
+With these configurations in place, you've now got Sentry setup to monitor your application across both the frontend and server side implementations. 
 
-With these configurations in place, you've now got Sentry setup to monitor your application acrosss both the frontend and server side implementations. 
-
-If you are running your application currently, it might be a good idea to toss a restart on it after all of these configurations. 
-
-```bash
-pnpm run dev
-```
-
-Once thats loaded, you can browse to https://localhost:5173 to view Sentry Academy. 
+Once that's loaded, you can browse to https://localhost:5173 to view Sentry Academy. 
 
 <ScaledImage 
   src="/assets/img/academy.png" 

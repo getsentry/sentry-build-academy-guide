@@ -27,21 +27,25 @@ By the end of this module, you will:
 Our search errors are successfully showing up in Sentry when we attempt to search for courses; but to get better insights into what's happening beyond the errors and Stack Traces - we can use Tracing and Spans alongside Errors.
 
 <Steps>
-  1. **Configure Custom Traces and Logs on the Frontend**
+  1. **Import Sentry in Frontend API Service**
 
-     Navigate to the `/apps/frontend/src/services/api.ts` file and import the following at the top:
+     Navigate to the `/apps/frontend/src/services/api.ts` file and add the Sentry import at the top:
 
      ```tsx
      import * as Sentry from '@sentry/react';
      ```
 
-     Add the following code after your import to bring the logger options in your application from Sentry:
+  2. **Set Up Frontend Search Logging**
+
+     Add the logger destructuring after your import to access Sentry's logging functionality:
 
      ```tsx
      const { logger } = Sentry
      ```
 
-     Replace the `search` call with the following:
+  3. **Create Frontend Search Span Structure**
+
+     Start by replacing the basic `search.courses` function with a span structure:
 
      ```tsx
      search: {
@@ -52,32 +56,66 @@ Our search errors are successfully showing up in Sentry when we attempt to searc
              op: 'http.client',
              attributes: {
                'search.query': query,
-               'http.url': `/search/courses?query=${encodeURIComponent(query)}`,
              },
            },
            () => {
-             logger.info(logger.fmt`Searching courses with query: ${query}`);
-             return fetchApi<any[]>(`/search/courses?query=${encodeURIComponent(query)}`);
+             // Search logic will be added in next steps
            }
          ),
      },
      ```
 
-  2. **Configure Custom Traces and Logs on the Server**
+  4. **Add Frontend Search Attributes**
 
-     Navigate to the `/apps/server/src/modules/search/routes.ts` file and import the following at the top:
+     Add the HTTP URL attribute to track the exact request being made:
+
+     ```tsx
+     attributes: {
+       'search.query': query,
+       'http.url': `/search/courses?query=${encodeURIComponent(query)}`,
+     },
+     ```
+
+  5. **Add Frontend Search Logging**
+
+     Inside the span callback, add logging for the search operation:
+
+     ```tsx
+     () => {
+       logger.info(logger.fmt`Searching courses with query: ${query}`);
+     }
+     ```
+
+  6. **Complete Frontend Search Request**
+
+     Complete the search implementation with the actual API call:
+
+     ```tsx
+     () => {
+       logger.info(logger.fmt`Searching courses with query: ${query}`);
+       return fetchApi<any[]>(`/search/courses?query=${encodeURIComponent(query)}`);
+     }
+     ```
+
+  7. **Import Sentry in Backend Search Routes**
+
+     Navigate to the `/apps/server/src/modules/search/routes.ts` file and add the Sentry import at the top:
 
      ```tsx
      import * as Sentry from '@sentry/node';
      ```
 
-     Add the following code after your import to bring the logger options in your application from Sentry:
+  8. **Set Up Backend Search Logging**
+
+     Add the logger destructuring after your import:
 
      ```tsx
      const { logger } = Sentry
      ```
 
-     Replace the `searchRoutes.get('/search/courses', async (req, res) => {` route with the following:
+  9. **Create Backend Search Span Structure**
+
+     Start replacing the `searchRoutes.get('/search/courses'` route with the basic span structure:
 
      ```tsx
      searchRoutes.get('/search/courses', async (req, res) => {
@@ -93,88 +131,158 @@ Our search errors are successfully showing up in Sentry when we attempt to searc
              },
            },
            async (span) => {
-             logger.info(logger.fmt`Backend received query parameters: ${q}`);
-             
-             // Add query validation attributes
-             span.setAttributes({
-               'search.query_provided': !!q,
-             });
-             
-             // Realistic API validation - backend expects 'q' parameter
-             if (!q || typeof q !== 'string') {
-               // This will throw when frontend sends 'query' instead of 'q'
-               throw new Error(`Missing required parameter 'q'. Received parameters: ${Object.keys(req.query).join(', ')}`);
-             }
-
-             logger.info(logger.fmt`Backend searching for: "${q}"`);
-
-             // Simple search implementation
-             const results = await db
-               .select({
-                 id: courses.id,
-                 title: courses.title,
-                 slug: courses.slug,
-                 description: courses.description,
-                 instructor: users.name,
-                 thumbnail: courses.thumbnail,
-                 category: courses.category,
-                 level: courses.level,
-                 duration: courses.duration,
-                 price: courses.price,
-                 rating: courses.rating,
-                 reviewCount: courses.reviewCount,
-               })
-               .from(courses)
-               .leftJoin(users, eq(courses.instructorId, users.id))
-               .where(
-                 or(
-                   ilike(courses.title, `%${q}%`),
-                   ilike(courses.description, `%${q}%`)
-                 )
-               )
-               .orderBy(courses.rating)
-               .limit(50);
-
-             // Add search results attributes
-             span.setAttributes({
-               'search.results_count': results.length,
-               'search.results_found': results.length > 0,
-               'search.query_successful': true,
-             });
-
-             logger.info(logger.fmt`Backend found ${results.length} results for query: "${q}"`);
-             
-             const responseData = {
-               results,
-               total: results.length,
-               query: q
-             };
-
-             res.json(responseData);
+             // Backend search logic will be added in next steps
            }
          );
 
        } catch (error: any) {
-         Sentry.captureException(error, {
-           tags: {
-             operation: 'search.courses.server',
-             query: req.query.q as string || 'undefined',
-           },
-           extra: {
-             queryParameters: req.query,
-             searchQuery: req.query.q,
-             receivedParameters: Object.keys(req.query),
-             requestUrl: req.url,
-           },
-         });
-
-         logger.error(logger.fmt`Search API Error for query "${req.query.q}": ${error.message}`);
-         throw new Error(error.message);
+         // Error handling will be added later
        }
      });
      ```
 
-     Try searching for courses again, and if you navigate to Explore > Traces on left navigation menu, you'll be able to search using the `span.description` filter and find your search-related spans.
+  10. **Add Backend Request Logging**
+
+      Inside the backend span, add initial logging for the received parameters:
+
+      ```tsx
+      async (span) => {
+        logger.info(logger.fmt`Backend received query parameters: ${q}`);
+      }
+      ```
+
+  11. **Add Query Validation Attributes**
+
+      Add span attributes to track query validation:
+
+      ```tsx
+      // Add query validation attributes
+      span.setAttributes({
+        'search.query_provided': !!q,
+      });
+      ```
+
+  12. **Add Parameter Validation Logic**
+
+      Add the validation logic that will reveal the parameter mismatch:
+
+      ```tsx
+      // Realistic API validation - backend expects 'q' parameter
+      if (!q || typeof q !== 'string') {
+        // This will throw when frontend sends 'query' instead of 'q'
+        throw new Error(`Missing required parameter 'q'. Received parameters: ${Object.keys(req.query).join(', ')}`);
+      }
+      ```
+
+  13. **Add Search Query Logging**
+
+      Add logging for the actual search query being processed:
+
+      ```tsx
+      logger.info(logger.fmt`Backend searching for: "${q}"`);
+      ```
+
+  14. **Implement Database Search Logic**
+
+      Add the database search implementation:
+
+      ```tsx
+      // Simple search implementation
+      const results = await db
+        .select({
+          id: courses.id,
+          title: courses.title,
+          slug: courses.slug,
+          description: courses.description,
+          instructor: users.name,
+          thumbnail: courses.thumbnail,
+          category: courses.category,
+          level: courses.level,
+          duration: courses.duration,
+          price: courses.price,
+          rating: courses.rating,
+          reviewCount: courses.reviewCount,
+        })
+        .from(courses)
+        .leftJoin(users, eq(courses.instructorId, users.id))
+        .where(
+          or(
+            ilike(courses.title, `%${q}%`),
+            ilike(courses.description, `%${q}%`)
+          )
+        )
+        .orderBy(courses.rating)
+        .limit(50);
+      ```
+
+  15. **Add Search Results Attributes**
+
+      Track search results in span attributes:
+
+      ```tsx
+      // Add search results attributes
+      span.setAttributes({
+        'search.results_count': results.length,
+        'search.results_found': results.length > 0,
+        'search.query_successful': true,
+      });
+      ```
+
+  16. **Add Search Results Logging**
+
+      Log the search results:
+
+      ```tsx
+      logger.info(logger.fmt`Backend found ${results.length} results for query: "${q}"`);
+      ```
+
+  17. **Create Response Data Structure**
+
+      Build the response data structure:
+
+      ```tsx
+      const responseData = {
+        results,
+        total: results.length,
+        query: q
+      };
+      ```
+
+  18. **Send Search Response**
+
+      Send the response back to the frontend:
+
+      ```tsx
+      res.json(responseData);
+      ```
+
+  19. **Add Backend Error Handling**
+
+      Complete the backend route with comprehensive error handling:
+
+      ```tsx
+      } catch (error: any) {
+        Sentry.captureException(error, {
+          tags: {
+            operation: 'search.courses.server',
+            query: req.query.q as string || 'undefined',
+          },
+          extra: {
+            queryParameters: req.query,
+            searchQuery: req.query.q,
+            receivedParameters: Object.keys(req.query),
+            requestUrl: req.url,
+          },
+        });
+
+        logger.error(logger.fmt`Search API Error for query "${req.query.q}": ${error.message}`);
+        throw new Error(error.message);
+      }
+      ```
+
+  20. **Test Search Tracing**
+
+      Try searching for courses again. Navigate to Explore > Traces in Sentry's left navigation menu, and search using the `span.description` filter to find your search-related spans. You should now see the parameter mismatch clearly in the traces and logs.
 
 </Steps>
 
