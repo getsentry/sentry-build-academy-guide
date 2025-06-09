@@ -19,9 +19,9 @@ By the end of this module, you will:
 
 ## Database Query Instrumentation
 
-### SQLite/Database Queries with Bun
+### SQLite/Database Queries with Node.js
 
-Let's instrument database operations in your Bun backend:
+Let's instrument database operations in your Node.js backend:
 
 :::tip[Database Performance]
 Database queries are often the biggest performance bottleneck in web applications. Proper instrumentation helps you identify:
@@ -37,7 +37,7 @@ Database queries are often the biggest performance bottleneck in web application
   1. **Create Database Connection with Instrumentation**
 
      ```js
-     import * as Sentry from "@sentry/bun";
+     import * as Sentry from "@sentry/node";
      import { Database } from "bun:sqlite";
 
      class InstrumentedDatabase {
@@ -334,7 +334,7 @@ When these fail silently, it can have serious business impact. Proper monitoring
   1. **Create Instrumented Job Processor**
 
      ```js
-     import * as Sentry from "@sentry/bun";
+     import * as Sentry from "@sentry/node";
 
      class JobProcessor {
        async processJob(job) {

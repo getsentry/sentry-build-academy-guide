@@ -12,14 +12,14 @@ Well, clearly not - because its broken!
 
 <ScaledImage src="/assets/img/broken-search.webp" alt="Broken Course Search" />
 
-We're seeing the error pop up in Sentry, but how can we use Tracing and Logs to help troubleshoot the issue quicker? 
+We're seeing the error pop up in Sentry, but how can we use [**Tracing**](https://docs.sentry.io/concepts/key-terms/tracing/distributed-tracing/#traces-transactions-and-spans) and [**Logs**](https://docs.sentry.io/platforms/javascript/guides/react/logs/) to help troubleshoot the issue quicker? 
 
 ## Learning Objectives
 
 By the end of this module, you will:
 
 - Create custom spans to track the course search flow
-- Use trace explorer to search for specific spans that match issues in your environment
+- Use **Trace Explorer** to search for specific spans that match issues in your environment
 - Compare values across spans to understand where its breaking in the application
 - Extend our logs to include context around the search issues in the application
 
@@ -192,7 +192,7 @@ Now let's instrument the backend search functionality to trace server-side proce
 
   4. **Test Search Tracing**
 
-     Try searching for courses again. Navigate to Explore > Traces in Sentry's left navigation menu, and search using the `span.description` filter to find your search-related spans. You should now see the parameter mismatch clearly in the traces and logs - the frontend is sending a `query` parameter, but the backend is expecting a `q` parameter instead.
+     Try searching for courses again. Navigate to **Explore > Traces** in Sentry's left navigation menu, and search using the `span.description` filter to find your search-related spans. You should now see the parameter mismatch clearly in the traces and logs - the frontend is sending a `query` parameter, but the backend is expecting a `q` parameter instead.
 
 </Steps>
 
@@ -221,7 +221,7 @@ The issue is a parameter name mismatch between the frontend and backend! The fro
 
      This will ensure the frontend sends the parameter name that the backend expects.
 
-     Try searching for courses again, and if you navigate to Explore > Traces on left navigation menu, you'll be able to search using the `span.description` filter and find your search-related spans.
+     Try searching for courses again, and if you navigate to **Explore > Traces** on left navigation menu, you'll be able to search using the `span.description` filter and find your search-related spans.
 
 </Steps>
 
