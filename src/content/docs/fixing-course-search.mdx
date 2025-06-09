@@ -4,12 +4,13 @@ description: Learn how to use Sentry's Tracing and Logs to troubleshoot issues w
 ---
 
 import { Steps } from '@astrojs/starlight/components';
+import ScaledImage from '../../components/ScaledImage.astro';
 
 Now that we're able to login, naturally the next thing we'd want to do is be able to search for courses that we can enroll in, right?
 
 Well, clearly not - because its broken! 
 
-TODO: Add screenshot of the broken course search. 
+<ScaledImage src="/assets/img/broken-search.webp" alt="Broken Course Search" />
 
 We're seeing the error pop up in Sentry, but how can we use Tracing and Logs to help troubleshoot the issue quicker? 
 
