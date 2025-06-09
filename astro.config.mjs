@@ -17,7 +17,7 @@ export default defineConfig({
         SiteTitle: './src/components/SentryLogo.astro',
       },
       social: {
-        github: 'https://github.com/getsentry/sentry-build-javascript',
+        github: 'https://github.com/getsentry/sentry-build-academy-guide',
       },
       customCss: [
         // Add our custom Sentry theme

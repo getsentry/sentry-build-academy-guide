@@ -4,7 +4,7 @@ This repository contains the documentation and guide for the **Fullstack Perform
 
 ## About the Workshop
 
-Sentry Build is a comprehensive hands-on workshop that teaches developers how to implement complete observability in **Vite + React frontend** and **Bun backend** JavaScript applications. The workshop covers:
+Sentry Build is a comprehensive hands-on workshop that teaches developers how to implement complete observability in **Vite + React + React Router 7 frontend** and **Node.js backend** JavaScript applications. The workshop covers:
 
 - Setting up distributed tracing across fullstack JavaScript applications
 - Implementing custom metrics and performance monitoring
@@ -33,8 +33,8 @@ The workshop content is organized into 4 comprehensive modules:
 
 ```bash
 # Clone the repository
-git clone https://github.com/getsentry/sentry-build-javascript.git
-cd sentry-build-javascript
+git clone https://github.com/getsentry/sentry-build-academy-guide.git
+cd sentry-build-academy-guide
 
 # Install dependencies
 npm install
@@ -51,11 +51,11 @@ All commands are run from the root of the project, from a terminal:
 
 | Command                   | Action                                           |
 | :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
+| `npm install`            | Installs dependencies                            |
+| `npm run dev`            | Starts local dev server at `localhost:4321`      |
+| `npm run build`          | Build your production site to `./dist/`          |
+| `npm run preview`        | Preview your build locally, before deploying     |
+| `npm run astro ...`      | Run CLI commands like `astro add`, `astro check` |
 
 ## Contributing
 
@@ -65,8 +65,8 @@ If you'd like to contribute to this workshop, feel free to open a pull request o
 
 This workshop uses modern JavaScript technologies:
 
-- **Frontend**: Vite + React with Sentry browser SDK
-- **Backend**: Bun runtime with Sentry Bun SDK  
+- **Frontend**: Vite + React + React Router 7 with Sentry browser SDK
+- **Backend**: Node.js runtime with Sentry Node.js SDK  
 - **Database**: SQLite with custom instrumentation
 - **Documentation**: Astro Starlight
 
@@ -74,8 +74,9 @@ This workshop uses modern JavaScript technologies:
 
 - [Sentry Documentation](https://docs.sentry.io/)
 - [JavaScript SDK Documentation](https://docs.sentry.io/platforms/javascript/)
-- [Bun SDK Documentation](https://docs.sentry.io/platforms/javascript/guides/bun/)
+- [Node.js SDK Documentation](https://docs.sentry.io/platforms/javascript/guides/node/)
 - [React SDK Documentation](https://docs.sentry.io/platforms/javascript/guides/react/)
+- [React Router Documentation](https://reactrouter.com/)
 - [Astro Starlight Documentation](https://starlight.astro.build/)
 
 ## Astro Starlight Components Used
