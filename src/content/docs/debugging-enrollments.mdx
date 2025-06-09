@@ -21,9 +21,9 @@ By the end of this module, you will:
 - Understand how to resolve the issues with enrollment in the application
 - Extend our logs to include context around the enrollment issues in the application
 
-## Implementing Our Custom Spans and Logs
+## Frontend Implementation
 
-Our enrollment errors are successfully showing up in Sentry when we attempt to enroll in courses; but to get better insights into what's happening beyond the errors and Stack Traces - we can use Tracing and Spans alongside Errors.
+Let's start by instrumenting the frontend enrollment functionality to track enrollment requests and user data being sent to the backend.
 
 <Steps>
   1. **Replace the Complete Frontend Enrollment Method**
@@ -52,7 +52,14 @@ Our enrollment errors are successfully showing up in Sentry when we attempt to e
        ),
      ```
 
-  2. **Add Sentry Import to Backend Enrollment Routes**
+</Steps>
+
+## Backend Implementation
+
+Now let's instrument the backend enrollment functionality to trace server-side processing and identify the missing user ID issue.
+
+<Steps>
+  1. **Add Sentry Import to Backend Enrollment Routes**
 
      Navigate to the `/apps/server/src/modules/enrollments/routes.ts` file and add the Sentry import at the top:
 
@@ -60,7 +67,7 @@ Our enrollment errors are successfully showing up in Sentry when we attempt to e
      import * as Sentry from '@sentry/node';
      ```
 
-  3. **Set Up Backend Enrollment Logging**
+  2. **Set Up Backend Enrollment Logging**
 
      Add the logger destructuring after your imports:
 
@@ -68,7 +75,7 @@ Our enrollment errors are successfully showing up in Sentry when we attempt to e
      const { logger } = Sentry
      ```
 
-  4. **Replace the Complete Enrollment Route**
+  3. **Replace the Complete Enrollment Route**
 
      Replace the entire `enrollmentRoutes.post('/enrollments', async (req, res)` route with this instrumented version:
 
@@ -202,11 +209,13 @@ Our enrollment errors are successfully showing up in Sentry when we attempt to e
      });
      ```
 
-  5. **Test Enrollment Tracing**
+  4. **Test Enrollment Tracing**
 
      Try enrolling in courses again. Navigate to Explore > Traces in Sentry's left navigation menu, and search using the `span.description` filter to find your enrollment-related spans. You should now see that the User ID is missing from the backend request - this is visible both in the trace explorer's span views as well as clearly visible in the logs view.
 
 </Steps>
+
+## Analyzing the Issue
 
 When we look now, we can see that the User ID is not being passed to the backend. This is visible both in the trace explorer's span views as well as clearly visible in the logs view.
 

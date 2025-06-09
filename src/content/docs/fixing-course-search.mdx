@@ -22,9 +22,9 @@ By the end of this module, you will:
 - Compare values across spans to understand where its breaking in the application
 - Extend our logs to include context around the search issues in the application
 
-## Implementing Our Custom Spans and Logs
+## Frontend Implementation
 
-Our search errors are successfully showing up in Sentry when we attempt to search for courses; but to get better insights into what's happening beyond the errors and Stack Traces - we can use Tracing and Spans alongside Errors.
+Let's start by instrumenting the frontend search functionality to track search requests and parameters being sent to the backend.
 
 <Steps>
   1. **Add Sentry Import to Frontend API Service**
@@ -67,7 +67,14 @@ Our search errors are successfully showing up in Sentry when we attempt to searc
      },
      ```
 
-  4. **Add Sentry Import to Backend Search Routes**
+</Steps>
+
+## Backend Implementation
+
+Now let's instrument the backend search functionality to trace server-side processing and identify the parameter mismatch issue.
+
+<Steps>
+  1. **Add Sentry Import to Backend Search Routes**
 
      Navigate to the `/apps/server/src/modules/search/routes.ts` file and add the Sentry import at the top:
 
@@ -75,7 +82,7 @@ Our search errors are successfully showing up in Sentry when we attempt to searc
      import * as Sentry from '@sentry/node';
      ```
 
-  5. **Set Up Backend Search Logging**
+  2. **Set Up Backend Search Logging**
 
      Add the logger destructuring after your import:
 
@@ -83,7 +90,7 @@ Our search errors are successfully showing up in Sentry when we attempt to searc
      const { logger } = Sentry
      ```
 
-  6. **Replace the Complete Search Route**
+  3. **Replace the Complete Search Route**
 
      Replace the entire `searchRoutes.get('/search/courses'` route with this instrumented version:
 
@@ -182,11 +189,13 @@ Our search errors are successfully showing up in Sentry when we attempt to searc
      });
      ```
 
-  7. **Test Search Tracing**
+  4. **Test Search Tracing**
 
      Try searching for courses again. Navigate to Explore > Traces in Sentry's left navigation menu, and search using the `span.description` filter to find your search-related spans. You should now see the parameter mismatch clearly in the traces and logs - the frontend is sending a `query` parameter, but the backend is expecting a `q` parameter instead.
 
 </Steps>
+
+## Analyzing the Issue
 
 When we explore these traces and logs, we can see an inconsistency - the frontend is sending a `query` parameter, but the backend is expecting a `q` parameter instead.
 
