@@ -33,8 +33,8 @@ The workshop content is organized into 4 comprehensive modules:
 
 ```bash
 # Clone the repository
-git clone https://github.com/getsentry/sentry-build-javascript.git
-cd sentry-build-javascript
+git clone https://github.com/getsentry/sentry-build-academy-guide.git
+cd sentry-build-academy-guide
 
 # Install dependencies
 npm install
