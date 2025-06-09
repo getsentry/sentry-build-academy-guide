@@ -1,0 +1,212 @@
+---
+title: Fixing Academy Course Search
+description: Learn how to use Sentry's Tracing and Logs to troubleshoot issues with your course search
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Now that we're able to login, naturally the next thing we'd want to do is be able to search for courses that we can enroll in, right?
+
+Well, clearly not - because its broken! 
+
+TODO: Add screenshot of the broken course search. 
+
+We're seeing the error pop up in Sentry, but how can we use Tracing and Logs to help troubleshoot the issue quicker? 
+
+## Learning Objectives
+
+By the end of this module, you will:
+
+- Create custom spans to track the course search flow
+- Use trace explorer to search for specific spans that match issues in your environment
+- Compare values across spans to understand where its breaking in the application
+- Extend our logs to include context around the search issues in the application
+
+## Implementing Our Custom Spans and Logs
+
+Our search errors are successfully showing up in Sentry when we attempt to search for courses; but to get better insights into what's happening beyond the errors and Stack Traces - we can use Tracing and Spans alongside Errors.
+
+<Steps>
+  1. **Configure Custom Traces and Logs on the Frontend**
+
+     Navigate to the `/apps/frontend/src/services/api.ts` file and import the following at the top:
+
+     ```tsx
+     import * as Sentry from '@sentry/react';
+     ```
+
+     Add the following code after your import to bring the logger options in your application from Sentry:
+
+     ```tsx
+     const { logger } = Sentry
+     ```
+
+     Replace the `search` call with the following:
+
+     ```tsx
+     search: {
+       courses: (query: string) => 
+         Sentry.startSpan(
+           {
+             name: 'search.courses.frontend',
+             op: 'http.client',
+             attributes: {
+               'search.query': query,
+               'http.url': `/search/courses?query=${encodeURIComponent(query)}`,
+             },
+           },
+           () => {
+             logger.info(logger.fmt`Searching courses with query: ${query}`);
+             return fetchApi<any[]>(`/search/courses?query=${encodeURIComponent(query)}`);
+           }
+         ),
+     },
+     ```
+
+  2. **Configure Custom Traces and Logs on the Server**
+
+     Navigate to the `/apps/server/src/modules/search/routes.ts` file and import the following at the top:
+
+     ```tsx
+     import * as Sentry from '@sentry/node';
+     ```
+
+     Add the following code after your import to bring the logger options in your application from Sentry:
+
+     ```tsx
+     const { logger } = Sentry
+     ```
+
+     Replace the `searchRoutes.get('/search/courses', async (req, res) => {` route with the following:
+
+     ```tsx
+     searchRoutes.get('/search/courses', async (req, res) => {
+       try {
+         const { q } = req.query;
+
+         await Sentry.startSpan(
+           {
+             name: 'search.courses.server',
+             op: 'db.search',
+             attributes: {
+               'search.query': typeof q === 'string' ? q : String(q || ''),
+             },
+           },
+           async (span) => {
+             logger.info(logger.fmt`Backend received query parameters: ${q}`);
+             
+             // Add query validation attributes
+             span.setAttributes({
+               'search.query_provided': !!q,
+             });
+             
+             // Realistic API validation - backend expects 'q' parameter
+             if (!q || typeof q !== 'string') {
+               // This will throw when frontend sends 'query' instead of 'q'
+               throw new Error(`Missing required parameter 'q'. Received parameters: ${Object.keys(req.query).join(', ')}`);
+             }
+
+             logger.info(logger.fmt`Backend searching for: "${q}"`);
+
+             // Simple search implementation
+             const results = await db
+               .select({
+                 id: courses.id,
+                 title: courses.title,
+                 slug: courses.slug,
+                 description: courses.description,
+                 instructor: users.name,
+                 thumbnail: courses.thumbnail,
+                 category: courses.category,
+                 level: courses.level,
+                 duration: courses.duration,
+                 price: courses.price,
+                 rating: courses.rating,
+                 reviewCount: courses.reviewCount,
+               })
+               .from(courses)
+               .leftJoin(users, eq(courses.instructorId, users.id))
+               .where(
+                 or(
+                   ilike(courses.title, `%${q}%`),
+                   ilike(courses.description, `%${q}%`)
+                 )
+               )
+               .orderBy(courses.rating)
+               .limit(50);
+
+             // Add search results attributes
+             span.setAttributes({
+               'search.results_count': results.length,
+               'search.results_found': results.length > 0,
+               'search.query_successful': true,
+             });
+
+             logger.info(logger.fmt`Backend found ${results.length} results for query: "${q}"`);
+             
+             const responseData = {
+               results,
+               total: results.length,
+               query: q
+             };
+
+             res.json(responseData);
+           }
+         );
+
+       } catch (error: any) {
+         Sentry.captureException(error, {
+           tags: {
+             operation: 'search.courses.server',
+             query: req.query.q as string || 'undefined',
+           },
+           extra: {
+             queryParameters: req.query,
+             searchQuery: req.query.q,
+             receivedParameters: Object.keys(req.query),
+             requestUrl: req.url,
+           },
+         });
+
+         logger.error(logger.fmt`Search API Error for query "${req.query.q}": ${error.message}`);
+         throw new Error(error.message);
+       }
+     });
+     ```
+
+     Try searching for courses again, and if you navigate to Explore > Traces on left navigation menu, you'll be able to search using the `span.description` filter and find your search-related spans.
+
+</Steps>
+
+When we explore these traces and logs, we can see an inconsistency - the frontend is sending a `query` parameter, but the backend is expecting a `q` parameter instead.
+
+## Fixing the Issue
+
+The issue is a parameter name mismatch between the frontend and backend! The frontend is sending `?query=` but the server expects `?q=`.
+
+<Steps>
+  1. **Update the Frontend Parameter Name**
+
+     In the frontend search implementation, replace:
+
+     ```tsx
+     () => fetchApi<any[]>(`/search/courses?query=${encodeURIComponent(query)}`)
+     ```
+
+     With:
+
+     ```tsx
+     () => fetchApi<any[]>(`/search/courses?q=${encodeURIComponent(query)}`)
+     ```
+
+     This will ensure the frontend sends the parameter name that the backend expects.
+
+     Try searching for courses again, and if you navigate to Explore > Traces on left navigation menu, you'll be able to search using the `span.description` filter and find your search-related spans.
+
+</Steps>
+
+Once this is complete, give search a try again and you should see your results!
+
+## Next Steps
+
+Now that you have comprehensive instrumentation, move on to [Tracing for Database queries, Queues, and Caches](/database-queues-caches/) to learn about instrumenting your data layer and background processes.

@@ -29,6 +29,12 @@ Sentry is an error monitoring and performance monitoring platform that helps dev
 
 ## Setting Up Sentry in Your Frontend (Vite + React + React Router 7)
 
+Before you get into the next steps, you should create your frontend and server projects inside your sentry account. 
+
+You'll need to take note of your Sentry DSNs along the way, which you receive when you configure the projects. 
+
+Select `React` and `Node.js` as the platforms respectively.
+
 <Steps>
 1. **Install Sentry SDK**
 
@@ -70,7 +76,7 @@ Sentry is an error monitoring and performance monitoring platform that helps dev
    import { useLocation, useNavigationType, createRoutesFromChildren, matchRoutes } from "react-router-dom";
 
    Sentry.init({
-     dsn: process.env.SENTRY_DSN,
+     dsn: '<Your Sentry DSN>',
 
      
      sendDefaultPii: true,
@@ -110,13 +116,11 @@ Sentry is an error monitoring and performance monitoring platform that helps dev
    import './index.css';
 
    createRoot(document.getElementById('root')!, {
-     // Callback called when an error is thrown and not caught by an ErrorBoundary.
+
      onUncaughtError: Sentry.reactErrorHandler((error, errorInfo) => {
        console.warn('Uncaught error', error, errorInfo.componentStack);
      }),
-     // Callback called when React catches an error in an ErrorBoundary.
      onCaughtError: Sentry.reactErrorHandler(),
-     // Callback called when React automatically recovers from errors.
      onRecoverableError: Sentry.reactErrorHandler(),
      }).render(
        <App />
@@ -213,7 +217,7 @@ These configurations will setup your React frontend to leverage all of Sentry's 
    import * as Sentry from '@sentry/node';
 
    Sentry.init({
-     dsn: 'https://3a9b93c0dffb8559153ce45a04fcbc50@o4508130833793024.ingest.us.sentry.io/4509441326120960',
+     dsn: '<Your Sentry DSN>',
 
      _experiments: {
        enableLogs: true,
