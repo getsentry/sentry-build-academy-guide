@@ -36,6 +36,7 @@ You'll need to take note of your Sentry DSNs along the way, which you receive wh
 Select `React` and `Node.js` as the platforms respectively.
 
 <Steps>
+
 1. **Install Sentry SDK**
 
    ```bash
@@ -129,7 +130,7 @@ Select `React` and `Node.js` as the platforms respectively.
 
 5. **Create your ErrorBoundary**
 
-  Create `./apps/server/src/components/ErrorBoundary.ts`:
+   Create `./apps/server/src/components/ErrorBoundary.ts`:
 
    ```tsx
    import * as Sentry from '@sentry/react';
@@ -198,6 +199,7 @@ Select `React` and `Node.js` as the platforms respectively.
                <Route path="/login" element={<LoginPage />} errorElement={<ErrorBoundary />} />
                // Include the <ErrorBoundary /> component in any route that you want to be monitored by Sentry
    ```
+
 </Steps>
 
 These configurations will setup your React frontend to leverage all of Sentry's core capabiltiies and ensure you're capturing Errors, Traces, Logs, and Replays within your frontend application. Let's move onto the backend.
@@ -205,6 +207,7 @@ These configurations will setup your React frontend to leverage all of Sentry's 
 ## Configuring Sentry in your Backend (Node.js)
 
 <Steps>
+
 1. **Install Sentry SDK for Node.js**
 
    ```bash
@@ -231,7 +234,7 @@ These configurations will setup your React frontend to leverage all of Sentry's 
    });
    ```
 
-2. **Add instrument.ts to your server entry point - index.ts**
+3. **Add instrument.ts to your server entry point - index.ts**
 
    ```js
    import './instrument.ts';
@@ -242,7 +245,7 @@ These configurations will setup your React frontend to leverage all of Sentry's 
    Sentry.setupExpressErrorHandler(app);
    ```
 
-3. **Update the esbuild configuration to include Sentry**
+4. **Update the esbuild configuration to include Sentry**
 
    Edit `build.js` to include Sentry
 
@@ -274,7 +277,7 @@ These configurations will setup your React frontend to leverage all of Sentry's 
    });
    ```
 
-4. **Move through the Source Map configuration**
+5. **Move through the Source Map configuration**
 
    ```bash
    cd apps/server && npx @sentry/wizard@latest -i sourcemaps
