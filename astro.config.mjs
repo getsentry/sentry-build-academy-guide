@@ -34,7 +34,6 @@ export default defineConfig({
             { label: 'Debugging Course Enrollments (Tracing, Logs)', slug: 'debugging-enrollments' },
             { label: 'Tracing for Database queries, Queues, and Caches', slug: 'database-queues-caches' },
             { label: 'Visualizing Traces in Sentry', slug: 'visualizing-traces' },
-            { label: 'Wrapping Up!', slug: 'wrapping-up' },
           ],
         },
         {
@@ -42,12 +41,12 @@ export default defineConfig({
           items: [
             { label: 'Sentry Documentation', link: 'https://docs.sentry.io/' },
             {
-              label: 'JavaScript SDK',
-              link: 'https://docs.sentry.io/platforms/javascript/',
+              label: 'React SDK',
+              link: 'https://docs.sentry.io/platforms/javascript/guides/react/',
             },
             {
-              label: 'Bun SDK',
-              link: 'https://docs.sentry.io/platforms/javascript/guides/bun/',
+              label: 'Node SDK',
+              link: 'https://docs.sentry.io/platforms/javascript/guides/node/',
             },
           ],
         },
