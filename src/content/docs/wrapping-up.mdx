@@ -1,0 +1,180 @@
+---
+title: Wrapping Up - Your Sentry Journey
+description: A comprehensive summary of what you've built and learned throughout the workshop, plus next steps for your Sentry mastery
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import ScaledImage from '../../components/ScaledImage.astro';
+
+Congratulations! 🎉 You've completed the Sentry Build workshop and transformed a basic application into a fully instrumented, production-ready system with comprehensive monitoring, debugging, and performance insights.
+
+## What You've Built
+
+Throughout this workshop, you've created a complete observability solution for the Sentry Academy application. Here's everything you accomplished:
+
+### 🔧 **Full-Stack Sentry Integration**
+- **Frontend Monitoring**: Configured React application with error monitoring, session replays, and distributed tracing
+- **Backend Monitoring**: Set up Node.js server with comprehensive error tracking and performance monitoring
+- **Distributed Tracing**: Connected frontend and backend traces to track requests across your entire stack
+
+### 🐛 **Real-World Debugging Skills**
+You didn't just learn theory - you solved actual problems using Sentry's powerful debugging tools:
+
+**Authentication Issues**: 
+- Used traces and logs to identify missing login signature data
+- Fixed SSO authentication flow using distributed tracing insights
+
+**Search Functionality**: 
+- Discovered parameter mismatches between frontend and backend through span analysis
+- Resolved API communication issues using custom instrumentation
+
+**Enrollment Problems**: 
+- Traced missing user ID data across the application flow
+- Implemented comprehensive error tracking for enrollment processes
+
+### 📊 **Performance Optimization**
+- **Database Query Analysis**: Instrumented PostgreSQL queries to identify performance bottlenecks
+- **Custom Spans**: Created meaningful spans to track business-critical operations
+- **Performance Monitoring**: Set up comprehensive performance tracking for all key user flows
+
+### 📈 **Business-Critical Monitoring**
+You built a complete **Critical Experiences (CX)** monitoring system:
+
+- **Authentication Flow Monitoring**: Error tracking and performance metrics for user login
+- **Homepage Experience**: Load time monitoring and error tracking for first impressions
+- **Course Discovery**: Performance monitoring for course browsing and search functionality
+- **Detailed Course Views**: End-to-end monitoring of course detail pages and user interactions
+
+### 🎯 **Custom Instrumentation Mastery**
+- Created custom spans with meaningful attributes
+- Implemented structured logging throughout the application
+- Built custom metrics for business-specific operations like favorites and bookmarks
+- Set up comprehensive dashboards with actionable insights
+
+## Key Technical Skills You've Mastered
+
+### **Error Monitoring & Debugging**
+```javascript
+// You learned to capture and contextualize errors
+Sentry.captureException(error, {
+  tags: { operation: 'enrollment.create' },
+  extra: { userId, courseId, requestDetails }
+});
+```
+
+### **Distributed Tracing**
+```javascript
+// You mastered creating meaningful spans
+Sentry.startSpan({
+  name: 'enrollment.create.frontend',
+  op: 'http.client',
+  attributes: {
+    'enrollment.course_id': courseId,
+    'enrollment.user_id': userId
+  }
+}, () => {
+  // Your instrumented code
+});
+```
+
+### **Structured Logging**
+```javascript
+// You implemented contextual logging
+logger.info(logger.fmt`Creating enrollment for course: ${courseId}, user: ${userId}`);
+```
+
+### **Performance Monitoring**
+```javascript
+// You built custom performance tracking
+Sentry.startSpan({
+  name: 'course-details-content-load',
+  op: 'cx'  // Critical Experience operation
+}, () => {
+  // Performance-critical code
+});
+```
+
+## The Debugging Workflow You've Learned
+
+1. **Issue Detection**: Automatic error detection through Sentry monitoring
+2. **Context Gathering**: Using traces, logs, and session replays to understand the problem
+3. **Root Cause Analysis**: Following distributed traces to identify exact failure points
+4. **Solution Implementation**: Making targeted fixes based on observability data
+5. **Verification**: Using dashboards and metrics to confirm resolution
+
+This workflow is exactly what engineering teams use in production environments to maintain reliable, high-performing applications.
+
+## Beyond the Workshop: Your Next Steps
+
+While you've built a solid foundation, Sentry offers even more powerful capabilities to explore:
+
+### 🚨 **Advanced Alerting**
+- **Smart Alerts**: Set up intelligent alerts that reduce noise and focus on business impact
+- **Threshold Alerts**: Create performance-based alerts for response times, error rates, and custom metrics
+- **Escalation Policies**: Build notification workflows that ensure the right people are contacted
+- **Alert Integrations**: Connect with Slack, PagerDuty, Jira, and other tools in your workflow
+
+### 🔄 **Release Management**
+- **Release Tracking**: Monitor the health of each deployment and feature rollout
+- **Regression Detection**: Automatically identify performance degradations after releases
+- **Feature Flag Integration**: Track feature adoption and performance impact
+- **Deployment Markers**: Correlate issues with specific releases and code changes
+
+### 📱 **Mobile Monitoring**
+- **React Native**: Extend your monitoring to mobile applications
+- **Native iOS/Android**: Full native mobile application monitoring
+- **Mobile-Specific Metrics**: Track app launch times, screen load performance, and mobile-specific errors
+
+### 🔐 **Security Monitoring**
+- **Security Issues Detection**: Identify potential security vulnerabilities in your codebase
+- **Data Scrubbing**: Ensure sensitive data is automatically removed from error reports
+- **Compliance Tools**: Meet regulatory requirements with advanced data handling features
+
+### 🧪 **Advanced Performance Features**
+- **Profiling**: Deep dive into application performance with continuous profiling
+- **Web Vitals**: Comprehensive user experience monitoring with Core Web Vitals
+- **Database Performance**: Advanced query analysis and optimization recommendations
+- **Frontend Performance**: Detailed analysis of bundle sizes, loading performance, and user interactions
+
+### 🤖 **AI-Powered Features**
+- **Autofix**: AI-powered suggestions for fixing common issues
+- **Error Grouping**: Intelligent error clustering to reduce noise
+- **Anomaly Detection**: Automatic identification of unusual patterns in your application behavior
+
+### 🔗 **Integrations & Workflow**
+- **Source Code Integration**: Connect GitHub, GitLab, or Bitbucket for commit context
+- **Issue Tracking**: Seamless integration with Jira, Linear, and other project management tools
+- **CI/CD Integration**: Incorporate Sentry checks into your deployment pipeline
+- **Custom Dashboards**: Build executive-level dashboards that translate technical metrics into business impact
+
+## Community & Resources
+
+Your learning doesn't stop here! Take advantage of these resources:
+
+- **[Sentry Documentation](https://docs.sentry.io/)**: Comprehensive guides for advanced features
+- **[Sentry Blog](https://blog.sentry.io/)**: Stay updated with new features and best practices
+- **[Discord Community](https://discord.gg/sentry)**: Connect with other developers and get help
+- **[GitHub](https://github.com/getsentry)**: Contribute to open-source Sentry projects
+- **[Academy](https://sentry.io/academy/)**: Continue learning with specialized courses
+
+## Your Observability Journey Continues
+
+You've built more than just a monitoring system - you've developed a mindset for building reliable, observable applications. The skills you've learned here will serve you well as you:
+
+- Scale applications to handle more users and complexity
+- Debug issues faster and more efficiently
+- Build confidence in your deployments
+- Create better user experiences through data-driven insights
+- Collaborate more effectively with your team using shared observability data
+
+The foundation you've built with Sentry is just the beginning. Every application you work on from now on can benefit from the instrumentation patterns, debugging techniques, and monitoring strategies you've mastered.
+
+## Thank You!
+
+Thank you for completing the Sentry Build workshop! You're now equipped with production-grade observability skills that will make you a more effective developer and help you build more reliable applications.
+
+Keep building, keep monitoring, and remember - every error is an opportunity to make your application better! 🚀
+
+---
+
+*Ready for more? Explore the advanced features mentioned above, join our community, and continue your journey toward observability mastery.*
