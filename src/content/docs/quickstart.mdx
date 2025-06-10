@@ -47,22 +47,33 @@ We recommend setting up two separate projects in your Sentry account: one for th
   4. **Set up environment variables**
 
      ```bash
-     vim apps/server/.env
-     # Copy in the content that we provide during the workshop for the read-only account
+     touch apps/server/.env
+     # Add PORT=3001 to specify the server port
+     echo "PORT=3001" >> apps/server/.env
      ```
+
+  5. **Database Setup**
+
+     We'll be using [NeonDB](https://neon.new/) for this workshop, so we need to set up the database. Navigate to the `apps/server` directory and run the following commands:
 
      ```bash
-     vim apps/frontend/.env
-     # Copy in the content that we provide during the workshop for the read-only account
+     # Setup a temporary NeonDB Postgres instance 
+     pnpx neondb
+     # Follow the prompts to set up the database ensure you use the .env for your Server directory
+
+     # Setup our schema and seed the database 
+     pnpm db:generate
+     pnpm db:push
+     pnpm db:import
      ```
 
-  5. **Start the Project**
+  6. **Start the Project**
 
      ```bash
      pnpm dev
      ```
 
-  6. **Access the application project**
+  7. **Access the application project**
 
      The project will now be running at [http://localhost:5173](http://localhost:5173) with the backend API running on [http://localhost:3001](http://localhost:3001).
 </Steps>
