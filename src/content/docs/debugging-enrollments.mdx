@@ -6,11 +6,13 @@ description: Use Sentry's Error Monitoring, Logs, and Tracing to troubleshoot is
 import { Steps } from '@astrojs/starlight/components';
 import ScaledImage from '../../components/ScaledImage.astro';
 
-We can search for courses now! But now when we try to enroll, we're seeing an error. 
+We can search for courses now! But now when we try to enroll, we're getting some unresponsive controls. 
 
-TODO: Add screenshot of the broken course enrollment.
+<ScaledImage src="/assets/img/m3-enroll-error.png" alt="Enroll Error" size={100} />
 
 In Sentry, we're seeing the error pop up - and as we've shown previously, we can use [**Tracing**](https://docs.sentry.io/concepts/key-terms/tracing/distributed-tracing/#traces-transactions-and-spans) and [**Logs**](https://docs.sentry.io/platforms/javascript/guides/react/logs/) to help troubleshoot the issue quicker.
+
+<ScaledImage src="/assets/img/m3-issues.png" alt="Module 3 Issues" size={100} />
 
 ## Learning Objectives
 
@@ -51,6 +53,24 @@ Let's start by instrumenting the frontend enrollment functionality to track enro
          }
        ),
      ```
+
+  2. **Test Enrollment Tracing**
+
+     Try enrolling in courses again. Navigate to **Explore > Traces** in Sentry's left navigation menu, and search using the `span.description` filter to find your enrollment-related spans using the `enrollment.create.server` value.
+
+     <ScaledImage src="/assets/img/m3-trace-explorer-fe.png" alt="Trace Explorer FE" size={100} />
+
+  3. **Examine the Trace**
+
+     Clicking into one of the spans will show you the trace waterfall where you can examine the properties of any of the spans submitted.
+
+     <ScaledImage src="/assets/img/m3-trace-waterfall-fe.png" alt="Trace Waterfall" />
+
+  4. **Examine the Logs**
+
+     Check the **Explore > Logs** tab for the log entries created by `logger.info` calls.
+
+     <ScaledImage src="/assets/img/m3-logs-fe.png" alt="Logs" />
 
 </Steps>
 
@@ -211,7 +231,19 @@ Now let's instrument the backend enrollment functionality to trace server-side p
 
   4. **Test Enrollment Tracing**
 
-     Try enrolling in courses again. Navigate to **Explore > Traces** in Sentry's left navigation menu, and search using the `span.description` filter to find your enrollment-related spans. You should now see that the User ID is missing from the backend request - this is visible both in the **Trace Explorer**'s span views as well as clearly visible in the logs view.
+     Try enrolling in courses again. Navigate to **Explore > Traces** in Sentry's left navigation menu, and search using the `span.description` filter to find your enrollment-related spans using the `enrollment.create.server` value.
+
+     <ScaledImage src="/assets/img/m3-trace-explorer-be.png" alt="Trace Explorer BE" size={100} />
+
+  5. **Examine the Trace**
+
+     <ScaledImage src="/assets/img/m3-trace-waterfall-be.png" alt="Trace Waterfall" />
+
+  6. **Examine the Logs**
+
+     Check the **Explore > Logs** tab for the log entries created by `logger.info` and `logger.error` calls.
+
+     <ScaledImage src="/assets/img/m3-logs-be.png" alt="Logs" />
 
 </Steps>
 
@@ -246,4 +278,6 @@ The fix for this is simple - need to update the frontend client to successfully 
 
 </Steps>
 
-Once this change is made, submit your enrollment again and you'll see the course information populated across the spans and logs. 
+Once this change is made, submit your enrollment again and you'll see successful enrollment of your courses! 
+
+<ScaledImage src="/assets/img/m3-enroll-success.png" alt="Enroll Success" size={100} />

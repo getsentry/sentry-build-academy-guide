@@ -8,6 +8,8 @@ import ScaledImage from '../../components/ScaledImage.astro';
 
 The application is up and running but when you try to sign in, you're getting an error. These errors show up in Sentry, which is great, but how can we use [**Tracing**](https://docs.sentry.io/concepts/key-terms/tracing/distributed-tracing/#traces-transactions-and-spans) and [**Logs**](https://docs.sentry.io/platforms/javascript/guides/react/logs/) to help troubleshoot the issue?
 
+<ScaledImage src="/assets/img/m1-project-issues.png" alt="Project Issues" size={100} />
+
 ## Learning Objectives
 
 By the end of this module, you will:
@@ -93,9 +95,24 @@ Let's start by instrumenting the frontend authentication flow to track login att
 
   4. **Test Frontend Tracing**
 
-     Try logging in again. Navigate to **Explore > Traces** in Sentry's left navigation menu, and search using the `span.description` filter with `sso.authentication.frontend` as the value. Check the Logs tab for the log entries created by `logger.info` and `logger.error` calls.
+     Try logging in again. Navigate to **Explore > Traces** in Sentry's left navigation menu, and search using the `span.description` filter with `sso.authentication.frontend` as the value. 
+
+     <ScaledImage src="/assets/img/m1-trace-explorer-fe.png" alt="Trace Explorer FE" size={100} />
+
+  5. **Examine the Trace**
+
+      Clicking into one of the spans will show you the trace waterfall where you can examine the properties of any of he spans submitted. 
+
+      <ScaledImage src="/assets/img/m1-span-waterfall-fe.png" alt="Trace Waterfall" />
+
+  6. **Examine the Logs**
+
+     Check the **Explore > Logs** tab for the log entries created by `logger.info` and `logger.error` calls.
+
+     <ScaledImage src="/assets/img/m1-logs-fe.png" alt="Logs" />
 
 </Steps>
+
 
 ## Backend Implementation
 
@@ -252,9 +269,25 @@ Now let's instrument the backend authentication flow to trace the server-side pr
 
   4. **Test Backend Tracing**
 
-     Try logging in again and observe the trace and logs by viewing the **Explore > Traces** and Logs menus in Sentry. You should now see the complete authentication flow traced from frontend to backend, and notice that the loginSignature is being created on the frontend but not being passed properly to the server.
+     Try logging in again and observe the trace and logs by viewing the **Explore > Traces** and using the Trace Explorer to search for `sso.authentication.server`.
+
+     <ScaledImage src="/assets/img/m1-trace-explorer-be.png" alt="Trace Explorer BE" size={100} />
+
+  5. **Examine the Trace**
+
+     Clicking into one of the spans will show you the trace waterfall where you can examine the properties of any of he spans submitted. 
+
+     <ScaledImage src="/assets/img/m1-span-waterfall-be.png" alt="Trace Waterfall" />
+
+  6. **Examine the Logs**
+
+     <ScaledImage src="/assets/img/m1-trace-explorer-be.png" alt="Trace Explorer BE" size={100} />
+
+     <ScaledImage src="/assets/img/m1-logs-be.png" alt="Logs" />
 
 </Steps>
+
+You should now see the complete authentication flow traced from frontend to backend, and notice that the loginSignature is being created on the frontend but not being passed properly to the server.
 
 ## Analyzing the Issue
 

@@ -14,6 +14,8 @@ Well, clearly not - because its broken!
 
 We're seeing the error pop up in Sentry, but how can we use [**Tracing**](https://docs.sentry.io/concepts/key-terms/tracing/distributed-tracing/#traces-transactions-and-spans) and [**Logs**](https://docs.sentry.io/platforms/javascript/guides/react/logs/) to help troubleshoot the issue quicker? 
 
+<ScaledImage src="/assets/img/m2-issues.png" alt="Modul 2 Issues" size={100} />
+
 ## Learning Objectives
 
 By the end of this module, you will:
@@ -67,6 +69,24 @@ Let's start by instrumenting the frontend search functionality to track search r
          ),
      },
      ```
+
+  4. **Test Search Tracing**
+
+     Try searching for courses again. Navigate to **Explore > Traces** in Sentry's left navigation menu, and search using the `span.description` filter to find your search-related spans using the `search.courses.frontend` value.
+
+     <ScaledImage src="/assets/img/m2-trace-explorer-fe.png" alt="Trace Explorer FE" size={100} />
+
+  5. **Examine the Trace**
+
+     Clicking into one of the spans will show you the trace waterfall where you can examine the properties of any of the spans submitted. 
+
+     <ScaledImage src="/assets/img/m2-trace-waterfall-fe.png" alt="Trace Waterfall" />
+
+  6. **Examine the Logs**
+
+     Check the **Explore > Logs** tab for the log entries created by `logger.info` and `logger.error` calls.
+
+     <ScaledImage src="/assets/img/m2-logs-fe.png" alt="Logs" />
 
 </Steps>
 
@@ -192,7 +212,21 @@ Now let's instrument the backend search functionality to trace server-side proce
 
   4. **Test Search Tracing**
 
-     Try searching for courses again. Navigate to **Explore > Traces** in Sentry's left navigation menu, and search using the `span.description` filter to find your search-related spans. You should now see the parameter mismatch clearly in the traces and logs - the frontend is sending a `query` parameter, but the backend is expecting a `q` parameter instead.
+     Try searching for courses again. Navigate to **Explore > Traces** in Sentry's left navigation menu, and search using the `span.description` filter to find your search-related spans using the `search.courses.server` value.
+
+     <ScaledImage src="/assets/img/m2-trace-explorer-be.png" alt="Trace Explorer BE" size={100} />
+
+  5. **Examine the Trace**
+
+     Clicking into one of the spans will show you the trace waterfall where you can examine the properties of any of the spans submitted.
+
+     <ScaledImage src="/assets/img/m2-trace-waterfall-be.png" alt="Trace Waterfall" />
+
+  6. **Examine the Logs**
+
+     Check the **Explore > Logs** tab for the log entries created by `logger.info` and `logger.error` calls.
+
+     <ScaledImage src="/assets/img/m2-logs-be.png" alt="Logs" />
 
 </Steps>
 
@@ -227,6 +261,4 @@ The issue is a parameter name mismatch between the frontend and backend! The fro
 
 Once this is complete, give search a try again and you should see your results!
 
-## Next Steps
-
-Now that you have comprehensive instrumentation, move on to [Tracing for Database queries, Queues, and Caches](/database-queues-caches/) to learn about instrumenting your data layer and background processes.
+<ScaledImage src="/assets/img/m2-search-success.png" alt="Search Fixed" size={100} />

@@ -177,25 +177,89 @@ Select `React` and `Node.js` as the platforms respectively.
 6. **Update your `App.tsx` to include Sentry Error Boundary and React Router**
 
    ```tsx
-   import * as Sentry from '@sentry/react';
-   import ErrorBoundary from './components/ErrorBoundary';
+    // previous imports
+    
+    import * as Sentry from '@sentry/react';
+    import ErrorBoundary from './components/ErrorBoundary';
 
-   const SentryRoutes = Sentry.withSentryReactRouterV7Routing(Routes);
+    const SentryRoutes = Sentry.withSentryReactRouterV7Routing(Routes);
 
-   function App() {
-     return (
-       <AuthProvider>
-         <UserStateProvider>
-           <Router>
-             <SentryRoutes>
-               <Route path="/login" element={<LoginPage />} errorElement={<ErrorBoundary />} />
-               <Route path="/" element={<HomePage />} errorElement={<ErrorBoundary />} />
-             </SentryRoutes>
-           </Router>
-         </UserStateProvider>
-       </AuthProvider>
-     );
-   }
+    // Protected route component
+    const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+      const { isAuthenticated, isLoading } = useAuth();
+
+      if (isLoading) {
+        return <div>Loading...</div>;
+      }
+
+      if (!isAuthenticated) {
+        return <Navigate to="/login" replace />;
+      }
+
+      return <>{children}</>;
+    };
+
+    function App() {
+      return (
+        <AuthProvider>
+          <UserStateProvider>
+            <Router>
+              <SentryRoutes>
+                <Route path="/login" element={<LoginPage />} errorElement={<ErrorBoundary />} />
+
+                <Route path="/" element={<MainLayout />}>
+                  <Route index element={
+                    <ProtectedRoute>
+                      <HomePage />
+                    </ProtectedRoute>
+                  } />
+
+                  <Route path="courses" element={
+                    <ProtectedRoute>
+                      <CoursesPage />
+                    </ProtectedRoute>
+                  } errorElement={<ErrorBoundary />} />
+
+                  <Route path="courses/:courseId" element={
+                    <ProtectedRoute>
+                      <CourseDetailPage />
+                    </ProtectedRoute>
+                  } errorElement={<ErrorBoundary />} />
+
+                  <Route path="my-courses" element={
+                    <ProtectedRoute>
+                      <MyCoursesPage />
+                    </ProtectedRoute>
+                  } errorElement={<ErrorBoundary />} />
+
+                  <Route path="favorites" element={
+                    <ProtectedRoute>
+                      <FavoritesPage />
+                    </ProtectedRoute>
+                  } errorElement={<ErrorBoundary />} />
+
+                  <Route path="lesson-plans" element={
+                    <ProtectedRoute>
+                      <LessonPlansPage />
+                    </ProtectedRoute>
+                  } errorElement={<ErrorBoundary />} />
+
+                  <Route path="profile" element={
+                    <ProtectedRoute>
+                      <ProfilePage />
+                    </ProtectedRoute>
+                  } errorElement={<ErrorBoundary />} />
+                </Route>
+
+                <Route path="*" element={<Navigate to="/" replace />} errorElement={<ErrorBoundary />} />
+              </SentryRoutes>
+            </Router>
+          </UserStateProvider>
+        </AuthProvider>
+      );
+    }
+
+    export default App;
    ```
 
 </Steps>
