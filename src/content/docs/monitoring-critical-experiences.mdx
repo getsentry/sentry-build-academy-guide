@@ -1,0 +1,242 @@
+---
+title: Monitoring Critical Experiences
+description: Learn how to set up dashboards to monitor business-critical user flows and experiences using Sentry
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import ScaledImage from '../../components/ScaledImage.astro';
+
+Now that you've learned how to instrument your application, it's time to tie everything together and focus on the experiences that matter most. Critical Experiences are specific user flows that are business-critical - every error or performance issue in these flows will negatively impact your business success.
+
+<ScaledImage src="/assets/img/cx-dashboard.png" alt="Dashboard with multiple widgets monitoring different aspects of critical experiences" />
+
+## Learning Objectives
+
+By the end of this module, you will:
+
+- Understand what Critical Experiences are and why they matter
+- Learn how to identify and define Critical Experiences for your application
+- Set up comprehensive dashboards to monitor Critical Experiences using Sentry
+- Create widgets that track errors, performance metrics, and custom business metrics
+
+## What are Critical Experiences?
+
+Critical Experiences (CX) are specific user journeys or workflows that directly impact your business outcomes. Unlike general application monitoring, Critical Experience monitoring focuses on the end-to-end user flows that drive revenue, user engagement, and business growth.
+
+### Examples of Critical Experiences
+
+**E-commerce Application:**
+- User registration and onboarding
+- Product search and discovery
+- Add to cart and checkout process
+- Payment processing
+- Order confirmation and tracking
+
+**SaaS Platform:**
+- User signup and trial activation
+- Core feature usage (dashboard loading, data processing)
+- Subscription management
+- Billing and payment flows
+
+**Content Platform:**
+- Content discovery and search
+- Content consumption (video playback, article reading)
+- User engagement actions (likes, shares, comments)
+- Subscription or premium feature access
+
+### Why Monitor Critical Experiences?
+
+Traditional monitoring focuses on technical metrics like server response times and error rates. Critical Experience monitoring connects these technical metrics to business outcomes by:
+
+1. **Business Impact Focus**: Prioritizes issues that directly affect revenue and user satisfaction
+2. **End-to-End Visibility**: Tracks complete user journeys across multiple services and touchpoints
+3. **Proactive Problem Detection**: Identifies degradation before it significantly impacts business metrics
+4. **Contextual Alerting**: Provides alerts with business context, making it easier to prioritize responses
+
+## Sentry Academy Critical Experience Setup
+
+Our Critical Experience encompasses the following key touchpoints:
+
+1. **Authentication Flow**: User login and account access
+2. **Homepage Experience**: Platform overview and course discovery
+3. **Courses List**: Course browsing and selection
+4. **Course Detail**: Individual course information
+
+Each touchpoint has specific metrics we need to monitor to ensure optimal user experience.
+
+Before we get started, let's make sure that we have the dashboard created and that we're logged in. Navigate to the Dashboards page in Sentry and create a new one. Name it as you want. I'll name it "Academy CX".
+Don't forget to click on the "Save and Finish" button to create the dashboard.
+
+<ScaledImage src="/assets/img/new-dashboard.png" alt="New dashboard creation page" />
+
+## 1. Authentication Flow Monitoring
+
+The authentication flow is critical because users who can't log in can't access any platform features. We need to monitor both the technical performance and business impact of authentication issues.
+
+For this step we'll just have one widget that tracks the error rate on the `/login` page. Before we do that, we need to make sure that errors happening on that page are being reported to Sentry. Let's locate the `login` function in the `AuthContext.tsx` file and add a `Sentry.captureException` call to it:
+
+```tsx
+const login = async (email: string, password: string): Promise<void> => {
+   ...
+   try {
+   ...
+   } catch (error: any) {
+      Sentry.captureException(error); // Add this line
+   }
+};
+```
+
+With this in place, we can go ahead and create our first widget. Navigate to the newly created dashboard and click on the "Add Widget" button:
+
+<ScaledImage src="/assets/img/auth-errors-widget.png" alt="Authentication errors widget" />
+
+1. Set the name of the widget to something like "Auth Errors"
+2. Make sure the Dataset is set to "Errors"
+3. Leave the type as "Line", or you can also try "Bar"
+4. Set the visualization to "count"
+5. Set the filter to `project is sentry-academy-app` and `transaction is /login`
+6. Set the group by to "title"
+
+That's it! Hit "Add Widget" and you should see the widget appear on your dashboard. If you want, you can click "Edit Dashboard" and drag the widget to take up all the width of the dashboard. Now if we go back to the login page and try to log in with `admin@sentry.io` we should cause an error and see it in the widget.
+
+## 2. Homepage Experience Monitoring
+
+The homepage is often the first impression users have of your platform. Poor homepage performance can lead to immediate user abandonment and reduced engagement. Let's set up a couple of widgets to monitor the performance and errors on the homepage.
+
+<Steps>
+  1. **Homepage Load Time Monitoring**
+
+      <ScaledImage src="/assets/img/homepage-lcp.png" alt="Homepage LCP widget" />
+
+      To monitor the pageload, we can either track the p75 of the transaction duration for homepage loads, or the LCP (Largest Contentful Paint) metric. Let's do LCP on the homepage:
+      1. Set the name of the widget to something like "Homepage LCP"
+      2. Make sure the Dataset is set to "Transactions"
+      3. Leave the visualization to "Line"
+      4. Set the visualization to `p75` and `measurements.lcp`
+      5. Set the filter to `project is sentry-academy-app`, `transaction.op is pageload`, and `transaction is /`
+
+      This will give us a line chart widget that shows the p75 value of the homepage LCP metric over time.
+
+      If you want to track the p75 of the transactions durations for homepage loads, you can just switch the visualization to `p75` and `transaction.duration`.
+
+  2. **Homepage Error Tracking**
+
+     <ScaledImage src="/assets/img/homepage-errors.png" alt="Homepage errors widget" />
+
+     Similarly to the previous error widget, we can track the error rate on the homepage:
+     1. Set the name of the widget to something like "Homepage Errors"
+     2. Make sure the Dataset is set to "Errors"
+     3. Leave the type as "Line", or you can also try "Bar"
+     4. Set the visualization to "count"
+     5. The filter is going to be more verbose this time. We want to track errors both on the client side and the server side. Set the filter to `(project is sentry-academy-app and transaction is /) or (project is sentry-academy-api and transaction is GET /api/courses)`.
+     6. Set the group by to "title"
+
+     Hit "Add Widget" and you should see the widget appear on your dashboard. Feel free to click on "Edit Dashboard" and set the width of both Homepage widgets to half width.
+
+</Steps>
+
+## 3. Courses List Experience Monitoring
+
+The courses list is where users discover and browse available content. Issues here directly impact course enrollment and user engagement.
+
+<Steps>
+  1. **Courses List Performance Monitoring**
+     This time instead of tracking the LCP metric, we'll track a custom metric that measures the time it takes to receive the courses from the API. But first, we need to create the custom metric.
+
+     Open the `CoursesPage.tsx` file and locate the line where we fetch the courses from the API:
+
+     ```tsx
+     const getCategories = useCallback(() => api.courses.getCategories(), []);
+     ```
+
+     Earlier we learned how to create custom spans in Sentry, so let's create a span that wraps the body of the `useCallback` callback:
+
+     ```tsx
+     const getCategories = useCallback(() => Sentry.startSpan({ name: 'all-courses-content-load', op: 'cx' }, () => api.courses.getCategories()), []);
+     ```
+
+     We'll set the span name to `all-courses-content-load` and the operation to `cx`. The `cx` operation is not a special operation, it's just a way to identify the span as a critical experience span, that's all.
+
+     With this in place, let's create the widget:
+
+     <ScaledImage src="/assets/img/courses-list-performance.png" alt="Courses list performance widget" />
+
+     1. Set the name of the widget to something like "All Courses Content Load"
+     2. Make sure the Dataset is set to "Spans"
+     3. Leave the type as "Line"
+     4. Set the visualization to `p75` and `span.duration`
+     5. Set the filter to `project is sentry-academy-app`, `span.op is cx`, and `span.description is all-courses-content-load`
+
+     Hit "Add Widget" and you'll see the custom metric widget appear on your dashboard. Keep this at a third of the width because we'll add two more in this row.
+
+  2. **Courses List Error Monitoring**
+
+     The great thing about widgets is that we can duplicate them and modify some of their settings. Let's duplicate the "Homepage errors" widget, go to "Edit Widget" on the three dots, and just modify the Name and Filter to capture errors on the courses page:
+
+     <ScaledImage src="/assets/img/courses-list-errors.png" alt="Courses list errors widget" />
+
+     1. Set the name to something like "All Courses errors"
+     2. Set the filter to `project is sentry-academy-app and transaction is /courses`
+
+     Hit "Update Widget" and the widget will reflect the new changes.
+
+  3. **"Add to Favorites" Custom Metric**
+
+     We don't have a custom metric for "Add to Favorites" yet, so let's create one.
+
+     Open the `UserStateContext.tsx` file and locate the `toggleFavorite` function. Wrap the body of the function in a `Sentry.startSpan` call:
+
+     ```tsx
+      const toggleFavorite = useCallback((course: Course): void => {
+         ...
+         Sentry.startSpan({ name: 'toggle-favorite', op: 'cx' }, () => {
+            setProfile(prevProfile => {
+               ...
+            });
+         });
+      }, []);
+     ```
+
+     We'll set the span name to `toggle-favorite` and the operation to `cx`. Now let's create the widget.
+
+     This widget is going to be very similar to the "All Courses Content Load" widget, so let's duplicate that one and modify it:
+
+     <ScaledImage src="/assets/img/courses-list-add-to-favorites.png" alt="Courses list add to favorites widget" />
+
+     1. Set the name of the widget to something like "Add to Favorites"
+     2. Change the type to "Bar"
+     3. Change the visualization to `count`
+     4. Change the filter to `project is sentry-academy-app`, `span.op is cx`, and `span.description is toggle-favorite`
+
+     Hit "Update Widget" and you're set!
+
+</Steps>
+
+## 4. Course Detail Experience Monitoring
+
+The last step is to monitor the course detail page, more specifically:
+1. The p75 of a custom `course-details-content-load` span
+2. The error rate on the course details page
+3. The `count` of a custom `bookmark` span
+
+I'll let you do this one on your own. The widgets are going to be very similar to the last three widgets we created, so what you should do:
+1. Add the missing `course-details-content-load` span to the `CourseDetailPage.tsx` file
+2. Add the missing `bookmark` span to the `CourseDetailPage.tsx` file in the `toggleBookmark` function
+3. Duplicate the last three widgets and modify them accordingly
+
+When you're done, you should have a dashboard that looks like this:
+
+<ScaledImage src="/assets/img/final-dashboard.png" alt="Final Academy CX dashboard" />
+
+## Next Steps
+
+With Critical Experience monitoring in place, you now have visibility into the user flows that matter most to your business. Use this data to:
+
+1. **Prioritize Engineering Efforts**: Focus on issues that impact business-critical flows
+2. **Measure Business Impact**: Connect technical performance to business outcomes
+3. **Proactive Issue Resolution**: Address problems before they significantly impact users
+4. **Optimize User Experience**: Use CX data to guide UX and performance improvements
+
+It's important to note that you can create alerts based on each of the widgets we created. If you open a widget's menu, the first option would be either "Open in Discover" or "Open in Explore". Both Discover and Explore pages offer an option to create an alert of the current state.
+
+Continue monitoring your Critical Experiences and iterating on your dashboards and alerts as your application and business priorities evolve.
