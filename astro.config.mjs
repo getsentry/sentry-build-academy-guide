@@ -49,6 +49,10 @@ export default defineConfig({
               label: 'Monitoring Critical Experiences',
               slug: 'monitoring-critical-experiences',
             },
+            {
+              label: 'Wrapping Up - Your Sentry Journey',
+              slug: 'wrapping-up',
+            },
           ],
         },
         {
