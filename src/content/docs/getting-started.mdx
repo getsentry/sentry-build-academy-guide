@@ -29,49 +29,22 @@ Sentry is an error monitoring and performance monitoring platform that helps dev
 
 ## Setting Up Sentry in Your Frontend (Vite + React + React Router 7)
 
-Before you get into the next steps, you should create your frontend and server projects inside your sentry account. 
+Before you get into the next steps, you should create your frontend and server projects inside your sentry account.
 
-You'll need to take note of your Sentry DSNs along the way, which you receive when you configure the projects. 
+You'll need to take note of your Sentry DSNs along the way, which you receive when you configure the projects.
 
 Select `React` and `Node.js` as the platforms respectively.
 
 <Steps>
 
-1. **Install Sentry SDK**
+1. **Install Sentry's React SDK**
 
    ```bash
-   pnpm add @sentry/react @sentry/vite-plugin --filter frontend
+   pnpm add @sentry/react --filter frontend
    ```
+2. **Initialize Sentry**
 
-2. **Configure Vite Plugin**
-
-   Update your `vite.config.js`:
-
-   ```js
-   import { defineConfig } from 'vite'
-   import react from '@vitejs/plugin-react'
-   import { sentryVitePlugin } from "@sentry/vite-plugin";
-   import tailwindcss from '@tailwindcss/vite'
-
-   export default defineConfig({
-     plugins: [
-       react(),
-       tailwindcss(),
-       sentryVitePlugin({
-         org: "your-org-slug",
-         project: "your-project-slug",
-         authToken: process.env.SENTRY_AUTH_TOKEN,
-       }),
-     ],
-     build: {
-       sourcemap: true,
-     },
-   })
-   ```
-
-3. **Initialize Sentry**
-
-   Create `./apps/frontend/src/instrument.js`:
+   Create `./apps/frontend/src/instrument.ts`:
 
    ```js
    import * as Sentry from "@sentry/react";
@@ -102,7 +75,7 @@ Select `React` and `Node.js` as the platforms respectively.
    });
    ```
 
-4. **Import and update your `main.tsx` entry point**
+3. **Import and update your `main.tsx` entry point**
 
    ```js
    import './instrument.js';
@@ -122,9 +95,9 @@ Select `React` and `Node.js` as the platforms respectively.
    );
    ```
 
-5. **Create your ErrorBoundary**
+4. **Create your ErrorBoundary**
 
-   Create `./apps/server/src/components/ErrorBoundary.ts`:
+   Create `./apps/frontend/src/components/ErrorBoundary.tsx`:
 
    ```tsx
    import * as Sentry from '@sentry/react';
@@ -160,7 +133,7 @@ Select `React` and `Node.js` as the platforms respectively.
            <p className="text-gray-600 mb-4">
              {error instanceof Error ? error.message : 'Unknown error occurred'}
            </p>
-           <button 
+           <button
              onClick={() => window.location.reload()}
              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
            >
@@ -174,11 +147,11 @@ Select `React` and `Node.js` as the platforms respectively.
    export default ErrorBoundary;
    ```
 
-6. **Update your `App.tsx` to include Sentry Error Boundary and React Router**
+5. **Update your `App.tsx` to include Sentry Error Boundary and React Router**
 
    ```tsx
     // previous imports
-    
+
     import * as Sentry from '@sentry/react';
     import ErrorBoundary from './components/ErrorBoundary';
 
@@ -262,6 +235,27 @@ Select `React` and `Node.js` as the platforms respectively.
     export default App;
    ```
 
+6. **Setup the Vite plugin with Sentry's Wizard**
+
+   We can use Sentry's wizard to help us setup the Vite plugin. The Vite plugin takes care of the sourcemaps for us.
+
+   ```bash
+   cd apps/frontend && pnpx @sentry/wizard@latest -i sourcemaps
+   ```
+
+   This will trigger a series of prompts:
+   - Select `Yes` if you get notified about uncommited files
+   - Select `Sentry SaaS` when you get asked about what type of Sentry account you have
+   - Select `Yes` if you already have a Sentry account
+   - This will open a browser window that lets you select your organization and project
+   - Once you do, you're back to the terminal and you'll be prompted about the bundler, so select `Vite`
+   - Select `PNPM` as the package manager
+   - Select `No` when asked about using a CI/CD tool
+
+   That's it! The `vite.config.ts` file will be updated, and you'll see a `.env.sentry-build-plugin` file next to your `.env` file.
+
+   Now when we build our frontend, the Vite plugin will automatically upload the sourcemaps to Sentry an link them to our project and release.
+
 </Steps>
 
 These configurations will setup your React frontend to leverage all of Sentry's core capabilities and ensure you're capturing Errors, Traces, Logs, and Replays within your frontend application. Let's move onto the backend.
@@ -304,58 +298,28 @@ These configurations will setup your React frontend to leverage all of Sentry's 
    Sentry.setupExpressErrorHandler(app);
    ```
 
-4. **Update the esbuild configuration to include Sentry**
-
-   Edit `build.js` to include Sentry
-
-   ```js
-   import 'dotenv/config';
-   import esbuild from 'esbuild';
-   import { sentryEsbuildPlugin } from '@sentry/esbuild-plugin';
-
-   esbuild.build({
-     entryPoints: ['index.ts'],
-     sourcemap: true,
-     bundle: true,
-     minify: true,
-     platform: 'node',
-     format: 'cjs',
-     outdir: 'dist',
-     allowOverwrite: true,
-     external: ['express', 'drizzle-orm', 'pg'],
-     plugins: [
-       sentryEsbuildPlugin({
-         authToken: process.env.SENTRY_AUTH_TOKEN,
-         org: process.env.SENTRY_ORG,
-         project: process.env.SENTRY_PROJECT,
-         sourcemaps: {
-           filesToDeleteAfterUpload: ['**/*.js.map'],
-         },
-       }),
-     ],
-   });
-   ```
-
-5. **Move through the Source Map configuration**
+4. **Use Sentry's Wizard again to setup sourcemaps in the server project**
 
    ```bash
-   cd apps/server && npx @sentry/wizard@latest -i sourcemaps
+   cd apps/server && pnpx @sentry/wizard@latest -i sourcemaps
    ```
+
+   The prompts will be the same, with the only difference this time being that we'll select `esbuild` instead of `Vite`.
 
 </Steps>
 
-With these configurations in place, you've now got Sentry setup to monitor your application across both the frontend and server side implementations. 
+With these configurations in place, you've now got Sentry setup to monitor your application across both the frontend and server side implementations.
 
-If you are running your application currently, it might be a good idea to toss a restart on it after all of these configurations. 
+If you are running your application currently, it might be a good idea to toss a restart on it after all of these configurations.
 
 ```bash
 pnpm dev
 ```
 
-Once that's loaded, you can browse to https://localhost:5173 to view Sentry Academy. 
+Once that's loaded, you can browse to https://localhost:5173 to view Sentry Academy.
 
-<ScaledImage 
-  src="/assets/img/academy.png" 
-  alt="Academy" 
+<ScaledImage
+  src="/assets/img/academy.png"
+  alt="Academy"
   size={80}
 />
