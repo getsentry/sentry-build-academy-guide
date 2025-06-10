@@ -48,7 +48,6 @@ We recommend setting up two separate projects in your Sentry account: one for th
 
      ```bash
      touch apps/server/.env
-     # Add PORT=3001 to specify the server port
      echo "PORT=3001" >> apps/server/.env
      ```
 
@@ -57,17 +56,18 @@ We recommend setting up two separate projects in your Sentry account: one for th
      We'll be using [NeonDB](https://neon.new/) for this workshop, so we need to set up the database. Navigate to the `apps/server` directory and run the following commands:
 
      ```bash
-     # Setup a temporary NeonDB Postgres instance 
      pnpx neondb
-     # Follow the prompts to set up the database ensure you use the .env for your Server directory
+     ```
 
-     # Setup our schema and seed the database 
+  7. **Seed the Database**
+
+     ```bash
      pnpm db:generate
      pnpm db:push
      pnpm db:import
      ```
 
-  6. **Start the Project**
+  8. **Start the Project**
 
      ```bash
      pnpm dev
