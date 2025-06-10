@@ -10,14 +10,14 @@ We can search for courses now! But now when we try to enroll, we're seeing an er
 
 TODO: Add screenshot of the broken course enrollment.
 
-In Sentry, we're seeing the error pop up - and as we've shown previously, we can use Tracing and Logs to help troubleshoot the issue quicker.
+In Sentry, we're seeing the error pop up - and as we've shown previously, we can use [**Tracing**](https://docs.sentry.io/concepts/key-terms/tracing/distributed-tracing/#traces-transactions-and-spans) and [**Logs**](https://docs.sentry.io/platforms/javascript/guides/react/logs/) to help troubleshoot the issue quicker.
 
 ## Learning Objectives
 
 By the end of this module, you will:
 
 - Create custom spans to track the course enrollment flow
-- Use trace explorer to search for specific spans that show the enrollment flow and course information
+- Use **Trace Explorer** to search for specific spans that show the enrollment flow and course information
 - Understand how to resolve the issues with enrollment in the application
 - Extend our logs to include context around the enrollment issues in the application
 
@@ -211,13 +211,13 @@ Now let's instrument the backend enrollment functionality to trace server-side p
 
   4. **Test Enrollment Tracing**
 
-     Try enrolling in courses again. Navigate to Explore > Traces in Sentry's left navigation menu, and search using the `span.description` filter to find your enrollment-related spans. You should now see that the User ID is missing from the backend request - this is visible both in the trace explorer's span views as well as clearly visible in the logs view.
+     Try enrolling in courses again. Navigate to **Explore > Traces** in Sentry's left navigation menu, and search using the `span.description` filter to find your enrollment-related spans. You should now see that the User ID is missing from the backend request - this is visible both in the **Trace Explorer**'s span views as well as clearly visible in the logs view.
 
 </Steps>
 
 ## Analyzing the Issue
 
-When we look now, we can see that the User ID is not being passed to the backend. This is visible both in the trace explorer's span views as well as clearly visible in the logs view.
+When we look now, we can see that the User ID is not being passed to the backend. This is visible both in the Trace Explorer's Span views as well as clearly visible in the logs view.
 
 ## Fixing the Issue
 
