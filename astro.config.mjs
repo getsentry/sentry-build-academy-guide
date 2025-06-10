@@ -42,8 +42,8 @@ export default defineConfig({
               slug: 'debugging-enrollments',
             },
             {
-              label: 'Tracing for Database queries, Queues, and Caches',
-              slug: 'database-queues-caches',
+              label: 'Tracing for Database queries',
+              slug: 'database-queries',
             },
             {
               label: 'Monitoring Critical Experiences',
