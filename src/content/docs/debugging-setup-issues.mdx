@@ -1,0 +1,422 @@
+---
+title: Debugging Common Setup Issues
+description: Troubleshoot and resolve common OpenTelemetry and Sentry configuration issues
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Even with careful configuration, you might encounter issues when setting up OpenTelemetry with Sentry. This guide covers the most common problems and how to fix them.
+
+## Quick Diagnostics Checklist
+
+Before diving into specific issues, run through this quick checklist:
+
+- [ ] Backend server is running (`npm start` in `api/` directory)
+- [ ] Frontend is running (`npm run dev` in `frontend/` directory)
+- [ ] Docker containers are up (`docker ps` shows postgres, redis)
+- [ ] `.env` files exist in both `api/` and `frontend/`
+- [ ] Sentry endpoints are configured in `api/.env`
+- [ ] Sentry DSN is configured in `frontend/.env` or `instrument.js`
+
+## Issue 1: Not Seeing Any Traces in Sentry
+
+### Symptoms
+- Backend is running
+- API requests are successful
+- But no traces appear in Sentry
+
+### Diagnosis Steps
+
+<Steps>
+  1. **Check backend startup logs**
+
+     When you start the backend with `npm start`, you should see:
+     ```
+     =á Mode: DIRECT
+     =á Exporting to: https://your-org.ingest.us.sentry.io/...
+     =- OpenTelemetry instrumentation initialized
+     ```
+
+     If you see `=á Exporting to: undefined`, your `.env` is not configured correctly.
+
+  2. **Verify .env configuration**
+
+     Open `api/.env` and check:
+     ```bash
+     OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=https://YOUR-ORG.ingest.us.sentry.io/api/YOUR-PROJECT-ID/integration/otlp/v1/traces
+     OTEL_EXPORTER_OTLP_TRACES_HEADERS="x-sentry-auth=sentry sentry_key=YOUR_PUBLIC_KEY"
+     ```
+
+     Common mistakes:
+     - Missing quotes around the headers value
+     - Wrong endpoint format (missing `/integration/otlp/v1/traces`)
+     - Incorrect project ID or organization slug
+
+  3. **Test with a simple request**
+
+     ```bash
+     curl http://localhost:3000/api/products
+     ```
+
+     Then check Sentry after 10-15 seconds (there can be a slight delay).
+
+  4. **Check for errors in backend logs**
+
+     Look for errors like:
+     - `Error: getaddrinfo ENOTFOUND` - DNS resolution failed (check endpoint URL)
+     - `401 Unauthorized` - Authentication failed (check your public key)
+     - `404 Not Found` - Wrong endpoint path
+
+  5. **Verify Sentry project supports OTLP**
+
+     In Sentry:
+     - Go to **Settings** ’ **Projects** ’ [Your Project]
+     - Look for OTLP configuration or try sending a test trace
+     - Some very old projects might not have OTLP enabled
+</Steps>
+
+### Solutions
+
+**Wrong Endpoint Format**
+```bash
+# L Wrong
+OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=https://sentry.io/api/123/traces
+
+#  Correct
+OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=https://o123.ingest.us.sentry.io/api/456/integration/otlp/v1/traces
+```
+
+**Missing or Wrong Auth Header**
+```bash
+# L Wrong (missing quotes)
+OTEL_EXPORTER_OTLP_TRACES_HEADERS=x-sentry-auth=sentry sentry_key=abc123
+
+# L Wrong (wrong format)
+OTEL_EXPORTER_OTLP_TRACES_HEADERS="sentry_key=abc123"
+
+#  Correct
+OTEL_EXPORTER_OTLP_TRACES_HEADERS="x-sentry-auth=sentry sentry_key=abc123"
+```
+
+**After fixing .env, restart the server:**
+```bash
+# Stop server (Ctrl+C)
+npm start
+```
+
+## Issue 2: Frontend and Backend Traces Not Connecting
+
+### Symptoms
+- You see frontend traces in Sentry
+- You see backend traces in Sentry
+- But they're separate - not in the same trace
+
+### Diagnosis Steps
+
+<Steps>
+  1. **Check for trace headers in browser**
+
+     Open DevTools ’ Network tab ’ Click an API request ’ Request Headers
+
+     You should see:
+     ```
+     traceparent: 00-...
+     sentry-trace: ...
+     baggage: ...
+     ```
+
+     **If headers are missing:**
+     - Check `propagateTraceparent: true` in `frontend/instrument.js`
+     - Verify backend URL is in `tracePropagationTargets`
+
+  2. **Verify tracePropagationTargets**
+
+     In `frontend/instrument.js`:
+     ```javascript
+     tracePropagationTargets: [
+       /^\//,                          // Same-origin requests
+       /^http:\/\/localhost:3000/,     // Your backend URL
+     ],
+     ```
+
+     The regex must match your backend URL exactly!
+
+  3. **Check CORS configuration**
+
+     The backend must allow trace headers. In `api/src/index.js`, CORS should be configured:
+     ```javascript
+     app.use(cors({
+       origin: ['http://localhost:5173', 'http://localhost:5174'],
+       credentials: true,
+     }));
+     ```
+
+  4. **Verify both services send to same Sentry org**
+
+     - Frontend and backend can use different projects
+     - But they must be in the same Sentry **organization**
+     - Otherwise, Sentry can't link the traces
+</Steps>
+
+### Solutions
+
+**Add Backend URL to Propagation Targets**
+```javascript
+// In frontend/instrument.js
+tracePropagationTargets: [
+  /^\//,
+  /^http:\/\/localhost:3000/,  // Add this line
+]
+```
+
+**Enable propagateTraceparent**
+```javascript
+// In frontend/instrument.js
+Sentry.init({
+  // ... other config
+  propagateTraceparent: true,  // Make sure this is set
+});
+```
+
+**After changes, rebuild and restart frontend:**
+```bash
+# Stop frontend (Ctrl+C)
+npm run dev
+```
+
+## Issue 3: Database Queries Not Showing in Traces
+
+### Symptoms
+- Traces appear in Sentry
+- But no `db.query` spans
+
+### Diagnosis
+
+The backend auto-instrumentation should capture PostgreSQL queries automatically. If you're not seeing them:
+
+<Steps>
+  1. **Check database connection**
+
+     ```bash
+     docker ps
+     ```
+
+     Verify `postgres` container is running.
+
+  2. **Check instrumentation file**
+
+     In `api/instrumentation.js`, verify PostgreSQL instrumentation is enabled (it should be by default).
+
+  3. **Make a request that hits the database**
+
+     ```bash
+     curl http://localhost:3000/api/products
+     ```
+
+     This endpoint queries the `products` table.
+
+  4. **Check trace details in Sentry**
+
+     - Find the `GET /api/products` trace
+     - Click to expand
+     - Look for spans with `db.system: postgresql`
+</Steps>
+
+### Solutions
+
+If database spans are still missing:
+1. Restart the backend server
+2. Clear Redis cache: `docker compose restart redis`
+3. Check for errors in backend logs
+
+## Issue 4: Too Many or Too Few Spans
+
+### Too Many Spans
+
+If you see hundreds of spans making traces hard to read:
+
+```javascript
+// In api/instrumentation.js, you can disable noisy instrumentation:
+getNodeAutoInstrumentations({
+  '@opentelemetry/instrumentation-fs': {
+    enabled: false,  // Disable filesystem tracing (very noisy)
+  },
+})
+```
+
+### Too Few Spans
+
+If you're not seeing enough detail:
+- Check that auto-instrumentations are enabled
+- Add manual instrumentation for custom business logic
+- Verify sampling rate is 100% for development: `tracesSampleRate: 1.0`
+
+## Issue 5: Logs Not Appearing in Sentry
+
+### Symptoms
+- Traces appear
+- But no logs in Sentry's Logs view
+
+### Diagnosis
+
+<Steps>
+  1. **Check logs endpoint configuration**
+
+     In `api/.env`:
+     ```bash
+     OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=https://YOUR-ORG.ingest.us.sentry.io/api/YOUR-PROJECT-ID/integration/otlp/v1/logs
+     OTEL_EXPORTER_OTLP_LOGS_HEADERS="x-sentry-auth=sentry sentry_key=YOUR_PUBLIC_KEY"
+     ```
+
+  2. **Verify logs are being generated**
+
+     Check terminal output when running the backend. You should see log messages.
+
+  3. **Check Sentry logs view**
+
+     Go to **Explore** ’ **Logs** in Sentry
+</Steps>
+
+### Solution
+
+Make sure both traces AND logs endpoints are configured in `.env`.
+
+## Issue 6: OTEL Collector Mode Not Working
+
+### Symptoms
+- Direct mode works
+- But collector mode doesn't send data
+
+### Diagnosis
+
+<Steps>
+  1. **Check collector is running**
+
+     ```bash
+     docker ps
+     ```
+
+     You should see `otelcol-contrib` container.
+
+  2. **Check collector logs**
+
+     ```bash
+     npm run collector:logs
+     ```
+
+     Look for errors or warnings.
+
+  3. **Verify .env configuration**
+
+     For collector mode, you need different env vars:
+     ```bash
+     OTEL_MODE=collector
+     OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+     # Plus Sentry config for the collector itself
+     ```
+
+  4. **Check collector-config.yaml**
+
+     Verify the Sentry endpoint is configured in the exporters section.
+</Steps>
+
+### Solution
+
+See the "Using the OTEL Collector" module for detailed setup instructions.
+
+## General Debugging Tips
+
+### Enable Debug Logging
+
+In `api/instrumentation.js`, uncomment the debug settings:
+
+```javascript
+import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
+
+// Uncomment to enable debug logging
+diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
+```
+
+This will show detailed OTEL output in your terminal.
+
+### Check Network Requests
+
+In the backend, you can verify requests are being sent:
+
+```bash
+# Watch network traffic (macOS)
+sudo tcpdump -i any -n host your-org.ingest.us.sentry.io
+
+# Or use a tool like Wireshark
+```
+
+### Test with Minimal Setup
+
+If all else fails, create a minimal test:
+
+```javascript
+// test.js
+import * as Sentry from '@sentry/node';
+
+Sentry.init({
+  dsn: 'YOUR_DSN',
+  tracesSampleRate: 1.0,
+});
+
+Sentry.startSpan({ name: 'test-trace' }, () => {
+  console.log('Sending test trace...');
+});
+
+setTimeout(() => {
+  process.exit(0);
+}, 2000);
+```
+
+```bash
+node test.js
+```
+
+Check if this simple trace appears in Sentry.
+
+## Still Having Issues?
+
+If you're still stuck:
+
+1. **Check Sentry Status**
+   - Visit [status.sentry.io](https://status.sentry.io) to verify Sentry services are operational
+
+2. **Review Configuration**
+   - Double-check all endpoints and keys
+   - Compare with the example `.env.example` files
+
+3. **Search Sentry Docs**
+   - [OTLP Documentation](https://docs.sentry.io/concepts/otlp/)
+   - [OpenTelemetry Troubleshooting](https://opentelemetry.io/docs/instrumentation/js/troubleshooting/)
+
+4. **Check Server Logs**
+   - Backend: Look for errors in terminal output
+   - Collector: `npm run collector:logs`
+   - Docker: `docker compose logs`
+
+## Success Checklist
+
+Once everything is working, you should see:
+
+-  Backend traces in Sentry (**Explore** ’ **Traces**)
+-  Frontend traces in Sentry
+-  `traceparent` header in browser Network tab
+-  Frontend and backend spans in the same trace
+-  Database query spans (`db.system: postgresql`)
+-  Redis cache spans
+-  Logs in Sentry (**Explore** ’ **Logs**)
+
+If you can check all these boxes, you're ready to move on to investigating real issues!
+
+## What's Next?
+
+Now that your setup is working, let's put it to use:
+- Investigate performance issues using traces
+- Debug errors with full trace context
+- Explore how distributed tracing helps in production
+
+In the next modules, we'll walk through real-world debugging scenarios!

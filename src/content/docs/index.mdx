@@ -1,35 +1,60 @@
 ---
-title: Welcome to Sentry Build
-description: Fullstack Performance and Debugging with JavaScript
+title: OpenTelemetry with Sentry Workshop
+description: Learn how to send OpenTelemetry data to Sentry for powerful observability
 template: splash
 hero:
-  tagline: A hands-on workshop to get pretty good at tracing, logging, and application monitoring with Sentry. Featuring technologies like React, Node.js, NeonDB, and Drizzle.
+  tagline: A hands-on workshop teaching you how to configure OpenTelemetry to send traces and logs to Sentry, enable distributed tracing, and debug production issues with full observability.
   image:
     file: /src/assets/sentry-glyph-light-400x367.png
   actions:
     - text: Get Started
       link: /quickstart/
       icon: right-arrow
-    - text: Sentry.io
-      link: https://sentry.io
+    - text: Sentry OTLP Docs
+      link: https://docs.sentry.io/concepts/otlp/
       icon: external
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-## Workshop Modules
+## What You'll Learn
+
+This workshop teaches you how to integrate OpenTelemetry with Sentry using a real-world e-commerce application. You'll learn vendor-neutral instrumentation, distributed tracing, and production debugging techniques.
 
 <CardGrid>
-	<Card title="Getting Started with Sentry" icon="rocket">
-		Set up Error Monitoring, Logging, Session Replays, and Tracing in your React frontend and Node.js backend.
+	<Card title="Understanding Distributed Tracing" icon="information">
+		Learn about traces, spans, and how distributed tracing connects your frontend and backend using standard W3C headers.
 	</Card>
-	<Card title="Custom Spans and Metrics" icon="setting">
-		Create custom spans with attributes and metrics, and set up alerts for performance monitoring.
+	<Card title="Configure OpenTelemetry SDK" icon="setting">
+		Set up the OpenTelemetry SDK to send traces and logs to Sentry via OTLP, either directly to Sentry's OTLP endpoint or through an OpenTelemetry Collector.
 	</Card>
-	<Card title="Understanding Database Queries" icon="information">
-		Learn to search for and leverage database query performance data in your Sentry spans.
+	<Card title="Enable Trace Propagation" icon="puzzle">
+		Configure the frontend Sentry SDK to propagate trace context to your backend, creating unified distributed traces.
 	</Card>
-	<Card title="Creating Dashboards and Visualizations" icon="open-book">
-		Build custom dashboards to visualize your application's performance and error data.
+	<Card title="Debug with Traces and Logs" icon="magnifier">
+		Combine traces and logs to debug errors with full context. Use Sentry's Trace Explorer and waterfall views to identify bottlenecks, slow queries, and optimization opportunities.
 	</Card>
 </CardGrid>
+
+## Workshop Technologies
+
+- **Backend**: Node.js + Express with OpenTelemetry auto-instrumentation
+- **Frontend**: React with Sentry SDK
+- **Database**: Neon PostgreSQL with automatic query tracing
+- **Protocol**: OTLP (OpenTelemetry Protocol) for vendor-neutral telemetry
+- **Platform**: Sentry for visualization and debugging
+
+## Who This Is For
+
+This workshop is designed for:
+- **Backend developers** who want to add observability to their APIs
+- **Full-stack developers** who need distributed tracing across services
+- **DevOps engineers** evaluating OpenTelemetry and Sentry
+- **Teams** migrating to OpenTelemetry from proprietary solutions
+
+## Prerequisites
+
+- Basic knowledge of Node.js and React
+- Familiarity with HTTP requests and REST APIs
+- A free Neon account (for PostgreSQL database)
+- A Sentry account (free tier is fine)
