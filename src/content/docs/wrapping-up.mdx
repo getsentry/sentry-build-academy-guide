@@ -1,247 +1,180 @@
 ---
-title: Wrapping Up
-description: Summary of what you've learned and next steps for OpenTelemetry and Sentry
+title: Wrapping Up - Your Sentry Journey
+description: A comprehensive summary of what you've built and learned throughout the workshop, plus next steps for your Sentry mastery
 ---
 
-Congratulations! 🎉 You've completed the OpenTelemetry with Sentry workshop. You've learned how to configure OpenTelemetry to send traces and logs to Sentry, enable distributed tracing across your full stack, and use these tools to debug real-world issues.
+import { Steps } from '@astrojs/starlight/components';
+import ScaledImage from '../../components/ScaledImage.astro';
 
-## What You've Accomplished
+Congratulations! 🎉 You've completed the Sentry Build workshop and transformed a basic application into a fully instrumented, production-ready system with comprehensive monitoring, debugging, and performance insights.
 
-Throughout this workshop, you've built a complete observability solution for a full-stack e-commerce application:
+## What You've Built
 
-### 🔧 **OpenTelemetry Integration with Sentry**
-- **Backend Instrumentation**: Configured OpenTelemetry SDK to send traces and logs to Sentry via OTLP
-- **Frontend Integration**: Set up Sentry SDK with trace propagation enabled
-- **Distributed Tracing**: Connected frontend and backend traces using the `traceparent` header
-- **Auto-Instrumentation**: Leveraged automatic instrumentation for HTTP, databases, and caching
+Throughout this workshop, you've created a complete observability solution for the Sentry Academy application. Here's everything you accomplished:
 
-### 📊 **Understanding Distributed Tracing**
-- **Trace Anatomy**: Learned about traces, transactions, and spans
-- **Trace Propagation**: Understood how `traceparent`, `sentry-trace`, and `baggage` headers work
-- **W3C Standards**: Explored industry standards for distributed tracing
-- **Sentry's Trace Explorer**: Learned to navigate and search traces effectively
+### 🔧 **Full-Stack Sentry Integration**
+- **Frontend Monitoring**: Configured React application with error monitoring, session replays, and distributed tracing
+- **Backend Monitoring**: Set up Node.js server with comprehensive error tracking and performance monitoring
+- **Distributed Tracing**: Connected frontend and backend traces to track requests across your entire stack
 
-### 🐛 **Real-World Debugging**
-- **Performance Investigation**: Used waterfall views to identify bottlenecks
-- **Error Debugging**: Combined traces and logs to understand failures
-- **Root Cause Analysis**: Followed distributed traces to pinpoint issues
-- **Pattern Recognition**: Compared successful vs failed requests to find patterns
+### 🐛 **Real-World Debugging Skills**
+You didn't just learn theory - you solved actual problems using Sentry's powerful debugging tools:
 
-### ⚙️ **Advanced Configuration**
-- **Direct vs Collector Mode**: Understood when to use each approach
-- **OTLP Protocol**: Learned how OpenTelemetry data flows to Sentry
-- **Troubleshooting**: Developed skills to debug configuration issues
-- **Best Practices**: Learned production-ready patterns for observability
+**Authentication Issues**: 
+- Used traces and logs to identify missing login signature data
+- Fixed SSO authentication flow using distributed tracing insights
+
+**Search Functionality**: 
+- Discovered parameter mismatches between frontend and backend through span analysis
+- Resolved API communication issues using custom instrumentation
+
+**Enrollment Problems**: 
+- Traced missing user ID data across the application flow
+- Implemented comprehensive error tracking for enrollment processes
+
+### 📊 **Performance Optimization**
+- **Database Query Analysis**: Instrumented PostgreSQL queries to identify performance bottlenecks
+- **Custom Spans**: Created meaningful spans to track business-critical operations
+- **Performance Monitoring**: Set up comprehensive performance tracking for all key user flows
+
+### 📈 **Business-Critical Monitoring**
+You built a complete **Critical Experiences (CX)** monitoring system:
+
+- **Authentication Flow Monitoring**: Error tracking and performance metrics for user login
+- **Homepage Experience**: Load time monitoring and error tracking for first impressions
+- **Course Discovery**: Performance monitoring for course browsing and search functionality
+- **Detailed Course Views**: End-to-end monitoring of course detail pages and user interactions
+
+### 🎯 **Custom Instrumentation Mastery**
+- Created custom spans with meaningful attributes
+- Implemented structured logging throughout the application
+- Built custom metrics for business-specific operations like favorites and bookmarks
+- Set up comprehensive dashboards with actionable insights
 
 ## Key Technical Skills You've Mastered
 
-### **Configuring OTLP Endpoints**
-```bash
-# You learned to configure Sentry OTLP endpoints
-OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=https://ORG.ingest.us.sentry.io/api/PROJECT/integration/otlp/v1/traces
-OTEL_EXPORTER_OTLP_TRACES_HEADERS="x-sentry-auth=sentry sentry_key=YOUR_KEY"
-```
-
-### **Enabling Trace Propagation**
+### **Error Monitoring & Debugging**
 ```javascript
-// You configured distributed tracing
-Sentry.init({
-  propagateTraceparent: true,  // THE key setting
-  tracePropagationTargets: [
-    /^\//,
-    /^http:\/\/localhost:3000/,
-  ],
+// You learned to capture and contextualize errors
+Sentry.captureException(error, {
+  tags: { operation: 'enrollment.create' },
+  extra: { userId, courseId, requestDetails }
 });
 ```
 
-### **Reading Traces**
+### **Distributed Tracing**
+```javascript
+// You mastered creating meaningful spans
+Sentry.startSpan({
+  name: 'enrollment.create.frontend',
+  op: 'http.client',
+  attributes: {
+    'enrollment.course_id': courseId,
+    'enrollment.user_id': userId
+  }
+}, () => {
+  // Your instrumented code
+});
 ```
-You learned to analyze waterfall views:
-├─ Frontend: pageload                      [200ms]
-│  └─ fetch POST /api/orders               [150ms]
-└─ Backend: POST /api/orders               [145ms]
-   ├─ db.query - SELECT FROM products      [80ms]  ← Bottleneck!
-   ├─ service.processPayment               [50ms]
-   └─ cache.set - order:123                [3ms]
+
+### **Structured Logging**
+```javascript
+// You implemented contextual logging
+logger.info(logger.fmt`Creating enrollment for course: ${courseId}, user: ${userId}`);
 ```
 
-### **Debugging with Context**
-- Used Trace Explorer to find slow requests
-- Filtered logs by Trace ID
-- Correlated errors across services
-- Identified performance bottlenecks
+### **Performance Monitoring**
+```javascript
+// You built custom performance tracking
+Sentry.startSpan({
+  name: 'course-details-content-load',
+  op: 'cx'  // Critical Experience operation
+}, () => {
+  // Performance-critical code
+});
+```
 
-## The OpenTelemetry + Sentry Advantage
+## The Debugging Workflow You've Learned
 
-You've experienced the benefits of combining OpenTelemetry with Sentry:
+1. **Issue Detection**: Automatic error detection through Sentry monitoring
+2. **Context Gathering**: Using traces, logs, and session replays to understand the problem
+3. **Root Cause Analysis**: Following distributed traces to identify exact failure points
+4. **Solution Implementation**: Making targeted fixes based on observability data
+5. **Verification**: Using dashboards and metrics to confirm resolution
 
-**Vendor Neutrality**
-- Use standard OpenTelemetry instrumentation
-- Switch backends without changing application code
-- Future-proof your observability strategy
+This workflow is exactly what engineering teams use in production environments to maintain reliable, high-performing applications.
 
-**Automatic Instrumentation**
-- HTTP requests, database queries, cache operations captured automatically
-- No manual span creation needed for common operations
-- Comprehensive coverage with minimal code changes
+## Beyond the Workshop: Your Next Steps
 
-**Powerful Visualization**
-- Sentry's Trace Explorer for searching and filtering
-- Waterfall views for performance analysis
-- Integrated logs and error tracking
+While you've built a solid foundation, Sentry offers even more powerful capabilities to explore:
 
-**Production Ready**
-- Proven at scale by companies worldwide
-- Rich ecosystem of tools and integrations
-- Active community and support
+### 🚨 **Advanced Alerting**
+- **Smart Alerts**: Set up intelligent alerts that reduce noise and focus on business impact
+- **Threshold Alerts**: Create performance-based alerts for response times, error rates, and custom metrics
+- **Escalation Policies**: Build notification workflows that ensure the right people are contacted
+- **Alert Integrations**: Connect with Slack, PagerDuty, Jira, and other tools in your workflow
 
-## Beyond the Workshop
+### 🔄 **Release Management**
+- **Release Tracking**: Monitor the health of each deployment and feature rollout
+- **Regression Detection**: Automatically identify performance degradations after releases
+- **Feature Flag Integration**: Track feature adoption and performance impact
+- **Deployment Markers**: Correlate issues with specific releases and code changes
 
-Now that you have the fundamentals, here are areas to explore:
+### 📱 **Mobile Monitoring**
+- **React Native**: Extend your monitoring to mobile applications
+- **Native iOS/Android**: Full native mobile application monitoring
+- **Mobile-Specific Metrics**: Track app launch times, screen load performance, and mobile-specific errors
 
-### 🚀 **Advanced OpenTelemetry**
-- **Metrics**: Add OpenTelemetry metrics for business KPIs
-- **Custom Spans**: Instrument business-critical operations manually
-- **Context Propagation**: Understand baggage for passing custom context
-- **Sampling**: Implement intelligent sampling strategies at scale
+### 🔐 **Security Monitoring**
+- **Security Issues Detection**: Identify potential security vulnerabilities in your codebase
+- **Data Scrubbing**: Ensure sensitive data is automatically removed from error reports
+- **Compliance Tools**: Meet regulatory requirements with advanced data handling features
 
-### 📈 **Sentry Features**
-- **Dashboards**: Create custom dashboards for your team
-- **Alerts**: Set up proactive monitoring with smart alerts
-- **Release Tracking**: Monitor deployments and detect regressions
-- **Session Replay**: See exactly what users experienced during errors
-- **Profiling**: Dive deeper into performance with continuous profiling
+### 🧪 **Advanced Performance Features**
+- **Profiling**: Deep dive into application performance with continuous profiling
+- **Web Vitals**: Comprehensive user experience monitoring with Core Web Vitals
+- **Database Performance**: Advanced query analysis and optimization recommendations
+- **Frontend Performance**: Detailed analysis of bundle sizes, loading performance, and user interactions
 
-### 🏗️ **Architecture Patterns**
-- **Microservices**: Apply distributed tracing across multiple services
-- **Collector Deployment**: Run collectors in production (sidecar, gateway patterns)
-- **Multi-Backend**: Send data to multiple observability platforms
-- **Data Processing**: Use collector processors for filtering and enrichment
+### 🤖 **AI-Powered Features**
+- **Autofix**: AI-powered suggestions for fixing common issues
+- **Error Grouping**: Intelligent error clustering to reduce noise
+- **Anomaly Detection**: Automatic identification of unusual patterns in your application behavior
 
-### 🔒 **Production Considerations**
-- **PII Scrubbing**: Remove sensitive data from telemetry
-- **Sampling**: Control data volume while maintaining visibility
-- **Performance**: Optimize instrumentation overhead
-- **Security**: Secure OTLP endpoints and authentication
+### 🔗 **Integrations & Workflow**
+- **Source Code Integration**: Connect GitHub, GitLab, or Bitbucket for commit context
+- **Issue Tracking**: Seamless integration with Jira, Linear, and other project management tools
+- **CI/CD Integration**: Incorporate Sentry checks into your deployment pipeline
+- **Custom Dashboards**: Build executive-level dashboards that translate technical metrics into business impact
 
-## Resources for Continued Learning
+## Community & Resources
 
-### OpenTelemetry
-- **[OpenTelemetry Documentation](https://opentelemetry.io/docs/)**: Official guides and specifications
-- **[OTel JavaScript SDK](https://opentelemetry.io/docs/instrumentation/js/)**: Language-specific documentation
-- **[OTLP Specification](https://opentelemetry.io/docs/specs/otlp/)**: Protocol details
-- **[OpenTelemetry Blog](https://opentelemetry.io/blog/)**: Latest updates and best practices
+Your learning doesn't stop here! Take advantage of these resources:
 
-### Sentry
-- **[Sentry OTLP Documentation](https://docs.sentry.io/concepts/otlp/)**: Sentry's OTLP integration guide
-- **[Distributed Tracing Concepts](https://docs.sentry.io/concepts/key-terms/tracing/distributed-tracing/)**: Deep dive into tracing
-- **[Trace Explorer Guide](https://docs.sentry.io/product/explore/trace-explorer/)**: Master Sentry's trace search
-- **[Performance Monitoring](https://docs.sentry.io/product/performance/)**: Advanced performance features
+- **[Sentry Documentation](https://docs.sentry.io/)**: Comprehensive guides for advanced features
+- **[Sentry Blog](https://blog.sentry.io/)**: Stay updated with new features and best practices
+- **[Discord Community](https://discord.gg/sentry)**: Connect with other developers and get help
+- **[GitHub](https://github.com/getsentry)**: Contribute to open-source Sentry projects
+- **[Academy](https://sentry.io/academy/)**: Continue learning with specialized courses
 
-### Community
-- **[OpenTelemetry Slack](https://cloud-native.slack.com/)**: #opentelemetry channels
-- **[Sentry Discord](https://discord.gg/sentry)**: Get help and share experiences
-- **[CNCF Events](https://www.cncf.io/events/)**: Conferences and meetups
-- **[GitHub Discussions](https://github.com/open-telemetry/opentelemetry-js/discussions)**: Technical discussions
+## Your Observability Journey Continues
 
-## Applying What You've Learned
+You've built more than just a monitoring system - you've developed a mindset for building reliable, observable applications. The skills you've learned here will serve you well as you:
 
-The patterns you've learned in this workshop apply to any application:
+- Scale applications to handle more users and complexity
+- Debug issues faster and more efficiently
+- Build confidence in your deployments
+- Create better user experiences through data-driven insights
+- Collaborate more effectively with your team using shared observability data
 
-1. **Start with Auto-Instrumentation**
-   - Install OpenTelemetry SDK
-   - Configure OTLP endpoint
-   - Let auto-instrumentation do the heavy lifting
-
-2. **Add Manual Spans Strategically**
-   - Focus on business-critical operations
-   - Add context that auto-instrumentation can't capture
-   - Keep span names meaningful and consistent
-
-3. **Enable Distributed Tracing**
-   - Use standard propagation headers
-   - Configure `tracePropagationTargets` carefully
-   - Verify headers in browser/server logs
-
-4. **Iterate Based on Data**
-   - Start simple, add detail as needed
-   - Use traces to guide instrumentation decisions
-   - Remove noisy or low-value spans
-
-5. **Build Team Practices**
-   - Make observability part of code reviews
-   - Create runbooks with trace queries
-   - Share debugging techniques with teammates
-
-## Real-World Success Stories
-
-Teams using OpenTelemetry with Sentry report:
-
-- **Faster Debugging**: Reduce mean time to resolution (MTTR) by 60-80%
-- **Better User Experience**: Identify and fix performance issues proactively
-- **Cost Savings**: Vendor-neutral approach reduces lock-in and costs
-- **Team Efficiency**: Developers spend less time debugging, more time building
-- **Confidence**: Ship faster with comprehensive observability
-
-## Next Steps
-
-Ready to apply these skills to your own projects?
-
-<Steps>
-  1. **Instrument Your Application**
-
-     Start with a small service or feature:
-     - Add OpenTelemetry SDK
-     - Configure Sentry OTLP endpoint
-     - Verify traces appear in Sentry
-
-  2. **Enable Frontend Tracing**
-
-     If you have a web frontend:
-     - Add Sentry SDK
-     - Configure `propagateTraceparent`
-     - Verify distributed traces
-
-  3. **Add Business Context**
-
-     Enhance traces with custom spans:
-     - Instrument key user flows
-     - Add attributes for business data
-     - Create meaningful operation names
-
-  4. **Build Dashboards**
-
-     Visualize what matters:
-     - Create dashboards for your team
-     - Monitor key metrics
-     - Set up alerts for critical issues
-
-  5. **Share Knowledge**
-
-     Help your team adopt observability:
-     - Run a demo for your team
-     - Document trace queries for common issues
-     - Build a culture of observability
-</Steps>
+The foundation you've built with Sentry is just the beginning. Every application you work on from now on can benefit from the instrumentation patterns, debugging techniques, and monitoring strategies you've mastered.
 
 ## Thank You!
 
-Thank you for completing the OpenTelemetry with Sentry workshop! You now have the skills to build observable, debuggable applications using industry-standard tools.
+Thank you for completing the Sentry Build workshop! You're now equipped with production-grade observability skills that will make you a more effective developer and help you build more reliable applications.
 
-Remember:
-- OpenTelemetry gives you **vendor-neutral instrumentation**
-- Sentry gives you **powerful visualization and debugging**
-- Together, they provide **complete observability**
-
-Keep exploring, keep learning, and keep building great software! 🚀
+Keep building, keep monitoring, and remember - every error is an opportunity to make your application better! 🚀
 
 ---
 
-## Workshop Feedback
-
-Have feedback on this workshop? Found something unclear? Want to suggest improvements?
-- Open an issue on [GitHub](https://github.com/getsentry/otel-workshop-guide)
-- Join the [Sentry Discord](https://discord.gg/sentry)
-- Share your experience on social media
-
-*Happy tracing!* 🔍
+*Ready for more? Explore the advanced features mentioned above, join our community, and continue your journey toward observability mastery.*

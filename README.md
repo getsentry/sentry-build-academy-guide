@@ -1,32 +1,26 @@
-># OpenTelemetry with Sentry Workshop Guide
+# Sentry Build Workshop Guide
 
-This repository contains the documentation and guide for the **OpenTelemetry with Sentry** workshop, built using [Astro Starlight](https://starlight.astro.build).
+This repository contains the documentation and guide for the **Fullstack Performance and Debugging** workshop, built using [Astro Starlight](https://starlight.astro.build).
 
 ## About the Workshop
 
-This comprehensive hands-on workshop teaches developers how to send OpenTelemetry traces and logs to Sentry for powerful observability. The workshop uses a real-world **full-stack e-commerce application** with Node.js backend and React frontend.
+Sentry Build is a comprehensive hands-on workshop that teaches developers how to implement complete observability in **Vite + React + React Router 7 frontend** and **Node.js backend** JavaScript applications. The workshop covers:
 
-Topics covered:
-- Configuring OpenTelemetry SDK to send data to Sentry via OTLP
-- Understanding distributed tracing (traces, transactions, spans)
-- Enabling trace propagation between frontend and backend
-- Using Sentry's Trace Explorer to investigate performance issues
-- Debugging errors with full trace context and logs
-- Using the OpenTelemetry Collector (optional)
+- Setting up distributed tracing across fullstack JavaScript applications
+- Implementing custom metrics and performance monitoring
+- Instrumenting databases, queues, and caches for complete visibility
+- Creating actionable alerts and dashboards
+- Using Sentry's visualization tools for debugging and optimization
+- Best practices for production-ready observability
 
 ## Workshop Content
 
-The workshop is organized into 9 modules:
+The workshop content is organized into 4 comprehensive modules:
 
-1. **Quickstart** - Set up the OTEL e-commerce application locally
-2. **Understanding Distributed Tracing** - Learn about traces, spans, and how they connect services
-3. **Configure OpenTelemetry SDK** - Send backend traces/logs to Sentry via OTLP
-4. **Connect Frontend to Backend Tracing** - Enable distributed tracing across the full stack
-5. **Debugging Common Setup Issues** - Troubleshoot configuration problems
-6. **Investigating Performance Issues** - Use traces to find bottlenecks
-7. **Investigating Errors with Logs** - Debug errors with full context
-8. **(Optional) Using the OTEL Collector** - Learn when and how to use the Collector
-9. **Wrapping Up** - Summary and next steps
+1. **Getting Started with Tracing and Logs** - Set up Sentry tracing and logging in your Vite frontend and Bun backend application.
+2. **Instrumenting Span Attributes, Metrics, and Alerts** - Learn to add custom spans, attributes, and metrics to track your application's behavior.
+3. **Tracing Database, Queues, and Caches** - Instrument database queries, background jobs, and caching layers for complete visibility.
+4. **Visualizing Traces in Sentry** - Master Sentry's trace visualization tools to debug performance issues and optimize your application.
 
 ## Running the Documentation Locally
 
@@ -34,115 +28,87 @@ The workshop is organized into 9 modules:
 
 - [Git](https://git-scm.com/downloads)
 - [Node.js](https://nodejs.org/) (version 18 or higher)
-- [npm](https://www.npmjs.com/) (comes with Node.js)
+- [pnpm](https://pnpm.io/) (recommended; Node.js ≥16.13 includes Corepack to enable pnpm)
+- A [Sentry account](https://sentry.io/signup/)
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/getsentry/otel-workshop-guide.git
-cd otel-workshop-guide
+git clone https://github.com/getsentry/sentry-build-academy-guide.git
+cd sentry-build-academy-guide
 
 # Install dependencies
-npm install
+pnpm install
 
 # Start the development server
-npm run dev
+pnpm dev
 ```
 
 The documentation will be available at `http://localhost:4321`.
 
 ## Commands
 
-All commands are run from the root of the project:
+All commands are run from the root of the project, from a terminal:
 
 | Command          | Action                                           |
 | :--------------- | :----------------------------------------------- |
-| `npm install`    | Installs dependencies                            |
-| `npm run dev`    | Starts local dev server at `localhost:4321`      |
-| `npm run build`  | Build your production site to `./dist/`          |
-| `npm run preview`| Preview your build locally, before deploying     |
-
-## Workshop Application
-
-This workshop uses a separate demo application. The documentation guides you through cloning and setting it up:
-
-**Demo Application**: [otel-ecommerce](https://github.com/getsentry/otel-ecommerce)
-
-## Workshop Technologies
-
-### Demo Application Stack:
-- **Backend**: Node.js + Express with OpenTelemetry auto-instrumentation
-- **Frontend**: React with Sentry SDK
-- **Database**: PostgreSQL with automatic query tracing
-- **Cache**: Redis with operation tracing
-- **Infrastructure**: Docker Compose
-- **Protocol**: OTLP (OpenTelemetry Protocol)
-- **Platform**: Sentry for visualization and debugging
-
-### Documentation:
-- **Framework**: Astro Starlight
-- **Styling**: Custom CSS (Sentry branding)
-- **Components**: Starlight built-in components
-
-## Key Learning Outcomes
-
-After completing this workshop, you'll be able to:
-
-- Configure OpenTelemetry SDK to send data to Sentry via OTLP
-- Enable distributed tracing between frontend (Sentry SDK) and backend (OpenTelemetry)
-- Understand trace propagation using W3C `traceparent` standard
-- Use Sentry's Trace Explorer to investigate performance issues
-- Debug errors with full trace context and logs
-- Decide when to use direct mode vs collector mode
-- Apply vendor-neutral observability patterns to your own applications
-
-## Resources
-
-### OpenTelemetry
-- [OpenTelemetry Documentation](https://opentelemetry.io/docs/)
-- [OTel JavaScript SDK](https://opentelemetry.io/docs/instrumentation/js/)
-- [OTLP Specification](https://opentelemetry.io/docs/specs/otlp/)
-
-### Sentry
-- [Sentry OTLP Documentation](https://docs.sentry.io/concepts/otlp/)
-- [Distributed Tracing Concepts](https://docs.sentry.io/concepts/key-terms/tracing/distributed-tracing/)
-- [Trace Explorer](https://docs.sentry.io/product/explore/trace-explorer/)
-
-### Community
-- [OpenTelemetry Slack](https://cloud-native.slack.com/) - #opentelemetry channels
-- [Sentry Discord](https://discord.gg/sentry) - Get help and share experiences
+| `pnpm install`   | Installs dependencies                            |
+| `pnpm dev`       | Starts local dev server at `localhost:4321`      |
+| `pnpm build`     | Build your production site to `./dist/`          |
+| `pnpm preview`   | Preview your build locally, before deploying     |
+| `pnpm astro ...` | Run CLI commands like `astro add`, `astro check` |
 
 ## Contributing
 
-If you'd like to contribute to this workshop, feel free to open a pull request or file an issue:
+If you'd like to contribute to this workshop, feel free to open a pull request or file an issue on the repository.
 
-- **Bug reports**: Found incorrect information? Let us know!
-- **Content improvements**: Have suggestions for clearer explanations?
-- **New scenarios**: Ideas for additional hands-on exercises?
+## Workshop Technologies
+
+This workshop uses modern JavaScript technologies:
+
+- **Frontend**: Vite + React + React Router 7 with Sentry browser SDK
+- **Backend**: Node.js runtime with Sentry Node.js SDK
+- **Database**: SQLite with custom instrumentation
+- **Documentation**: Astro Starlight
+
+## Resources
+
+- [Sentry Documentation](https://docs.sentry.io/)
+- [JavaScript SDK Documentation](https://docs.sentry.io/platforms/javascript/)
+- [Node.js SDK Documentation](https://docs.sentry.io/platforms/javascript/guides/node/)
+- [React SDK Documentation](https://docs.sentry.io/platforms/javascript/guides/react/)
+- [React Router Documentation](https://reactrouter.com/)
+- [Astro Starlight Documentation](https://starlight.astro.build/)
 
 ## Astro Starlight Components Used
 
-This workshop uses several Astro Starlight components:
+This workshop uses several Astro Starlight components for enhanced learning:
+
+### Images
+
+```markdown
+![Description](/src/assets/img/ImageName.png)
+```
 
 ### Steps Component
 
-```markdown
+````markdown
 import { Steps } from '@astrojs/starlight/components';
 
 <Steps>
-  1. **Install OpenTelemetry SDK**
+  1. **Install Sentry SDK**
 
      ```bash
-     npm install @opentelemetry/sdk-node
+     bun add @sentry/bun
      ```
 
-  2. **Configure OTLP endpoint**
+2.  **Configure Sentry**
 
-     Add your Sentry OTLP endpoint...
+         Create your configuration file...
 
-</Steps>
-```
+    </Steps>
+````
 
 ### Card Grid Component
 
@@ -150,8 +116,8 @@ import { Steps } from '@astrojs/starlight/components';
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
 <CardGrid>
-  <Card title="Understanding Traces" icon="information">
-    Learn about traces, transactions, and spans.
+  <Card title="Module 1" icon="rocket">
+    Description of the module content.
   </Card>
 </CardGrid>
 ```
@@ -171,13 +137,3 @@ Important information to note.
 Warning about potential issues.
 :::
 ```
-
-## License
-
-This workshop content is provided by Sentry for educational purposes.
-
-## Questions or Feedback?
-
-- Join the [Sentry Discord](https://discord.gg/sentry)
-- Open an issue on [GitHub](https://github.com/getsentry/otel-workshop-guide/issues)
-- Check the [Sentry Documentation](https://docs.sentry.io/)

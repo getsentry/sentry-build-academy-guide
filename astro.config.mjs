@@ -8,7 +8,7 @@ import sentry from '@sentry/astro';
 // https://astro.build/config
 export default defineConfig({
   integrations: [starlight({
-    title: 'OpenTelemetry with Sentry Workshop',
+    title: 'Sentry Build',
     logo: {
       src: './src/assets/placeholder.svg',
       replacesTitle: true,
@@ -18,7 +18,7 @@ export default defineConfig({
       SiteTitle: './src/components/SentryLogo.astro',
     },
     social: {
-      github: 'https://github.com/getsentry/otel-workshop-guide',
+      github: 'https://github.com/getsentry/sentry-build-academy-guide',
     },
     customCss: [
       // Add our custom Sentry theme
@@ -29,36 +29,29 @@ export default defineConfig({
         label: 'Workshop',
         items: [
           { label: 'Quickstart', slug: 'quickstart' },
+          { label: 'Getting Started with Sentry', slug: 'getting-started' },
           {
-            label: 'Understanding Distributed Tracing',
-            slug: 'understanding-distributed-tracing'
+            label: 'Broken Academy Single Sign On (Tracing, Logs)',
+            slug: 'troubleshooting-auth',
           },
           {
-            label: 'Configure OpenTelemetry SDK',
-            slug: 'configure-otel-sdk'
+            label: 'Fixing Academy Course Search (Tracing, Logs)',
+            slug: 'fixing-course-search',
           },
           {
-            label: 'Connect Frontend to Backend Tracing',
-            slug: 'connect-frontend-backend',
+            label: 'Debugging Course Enrollments (Tracing, Logs)',
+            slug: 'debugging-enrollments',
           },
           {
-            label: 'Debugging Common Setup Issues',
-            slug: 'debugging-setup-issues',
+            label: 'Tracing for Database queries',
+            slug: 'database-queries',
           },
           {
-            label: 'Investigating Performance Issues',
-            slug: 'investigating-performance',
+            label: 'Monitoring Critical Experiences',
+            slug: 'monitoring-critical-experiences',
           },
           {
-            label: 'Investigating Errors with Logs',
-            slug: 'investigating-errors',
-          },
-          {
-            label: '(Optional) Using the OTEL Collector',
-            slug: 'using-otel-collector',
-          },
-          {
-            label: 'Wrapping Up',
+            label: 'Wrapping Up - Your Sentry Journey',
             slug: 'wrapping-up',
           },
         ],
@@ -67,18 +60,13 @@ export default defineConfig({
         label: 'Resources',
         items: [
           { label: 'Sentry Documentation', link: 'https://docs.sentry.io/' },
-          { label: 'Sentry OTLP Documentation', link: 'https://docs.sentry.io/concepts/otlp/' },
           {
-            label: 'Distributed Tracing Concepts',
-            link: 'https://docs.sentry.io/concepts/key-terms/tracing/distributed-tracing/',
+            label: 'React SDK',
+            link: 'https://docs.sentry.io/platforms/javascript/guides/react/',
           },
           {
-            label: 'Trace Explorer',
-            link: 'https://docs.sentry.io/product/explore/trace-explorer/',
-          },
-          {
-            label: 'OpenTelemetry Documentation',
-            link: 'https://opentelemetry.io/docs/',
+            label: 'Node SDK',
+            link: 'https://docs.sentry.io/platforms/javascript/guides/node/',
           },
         ],
       },
